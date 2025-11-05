@@ -1,0 +1,277 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model User {
+  id          String         @id @default(uuid())
+  address     String         @unique
+  nonce       String?        
+  username    String?        @unique  
+  avatarUrl   String?        
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  page        Page?          
+  nfts        Nft[]          @relation("UserNFTs")
+  transactions Transaction[]  @relation("BuyerTransactions")
+}
+
+model Page {
+  id              String       @id @default(uuid())
+  name            String       @unique
+  slug            String       @unique
+  ownerId         String       @unique
+  owner           User         @relation(fields: [ownerId], references: [id])
+  tagline         String?
+  description     String?      @db.Text
+  avatarUrl       String?
+  bannerUrl       String?
+  status          PageStatus   @default(draft)
+  category        String?
+  tags            String[]
+  hasFirstPost    Boolean      @default(false)
+  viewCount       Int          @default(0)
+  salesCount      Int          @default(0)
+
+  twitterUrl      String?
+  instagramUrl    String?
+  websiteUrl      String?
+  discordUrl      String?
+  benefitsText    String?      @db.Text
+  featuredNftIds  String[]
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  nfts            Nft[]
+  collections     Collection[]
+  activities      Activity[]
+  stats           PageStats?
+
+  @@index([slug])
+  @@index([status])
+  @@index([category])
+}
+
+enum PageStatus {
+  draft
+  published
+}
+
+model Nft {
+  id              String      @id @default(uuid())
+  tokenId         String
+  name            String
+  description     String?     @db.Text
+  imageUrl        String
+  metadataUrl     String
+
+  price           Decimal?    @db.Decimal(18, 8)
+  status          NftStatus   @default(minted)
+
+  ownerId         String
+  owner           User        @relation("UserNFTs", fields: [ownerId], references: [id])
+
+  pageId          String
+  page            Page        @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  collectionId    String
+  collection      Collection  @relation(fields: [collectionId], references: [id], onDelete: Restrict)
+
+  mintedAt          DateTime?
+  mintTransactionHash String?
+  lastTransferHash   String?
+
+  listedAt          DateTime?
+  lastSalePrice     Decimal?    @db.Decimal(18, 8)
+  lastSaleAt        DateTime?
+  totalSales        Int         @default(0)
+
+  royaltyPercentage Int?
+  royaltyReceiver   String?
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  transactions    Transaction[]
+  blockchainData  BlockchainData?
+  activities      Activity[]
+  offers          Offer[]
+
+  @@unique([pageId, tokenId])
+  @@index([pageId])
+  @@index([collectionId])
+  @@index([ownerId])
+  @@index([status])
+  @@index([status, price])
+  @@index([status, listedAt])
+  @@index([pageId, status])
+}
+
+enum NftStatus {
+  minted
+  listed
+  sold
+  transferred
+}
+
+model Transaction {
+  id        String   @id @default(uuid())
+  nftId     String
+  nft       Nft      @relation(fields: [nftId], references: [id])
+  buyerId   String
+  buyer     User     @relation("BuyerTransactions", fields: [buyerId], references: [id])
+  price     Float
+  status    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([nftId])
+  @@index([buyerId])
+  @@index([createdAt])
+}
+
+model BlockchainData {
+  id               String   @id @default(uuid())
+  nftId            String   @unique
+  nft              Nft      @relation(fields: [nftId], references: [id])
+  blockHash        String
+  transactionHash  String
+  blockNumber      Int?
+  createdAt        DateTime @default(now())
+
+  @@index([transactionHash])
+  @@index([blockNumber])
+}
+
+model Collection {
+  id          String    @id @default(uuid())
+  pageId      String
+  page        Page      @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  name        String
+  slug        String
+  description String?   @db.Text
+  bannerUrl   String?
+
+  nfts        Nft[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([pageId, slug])
+  @@index([pageId])
+}
+
+model Activity {
+  id              String        @id @default(uuid())
+
+  nftId           String
+  nft             Nft           @relation(fields: [nftId], references: [id], onDelete: Cascade)
+
+  pageId          String
+  page            Page          @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  type            ActivityType
+
+  fromAddress     String?
+  toAddress       String?
+  price           Decimal?      @db.Decimal(18, 8)
+
+  transactionHash String?
+  blockNumber     Int?
+
+  timestamp       DateTime      @default(now())
+
+  @@index([pageId])
+  @@index([nftId])
+  @@index([type])
+  @@index([timestamp])
+}
+
+enum ActivityType {
+  mint
+  list
+  sale
+  transfer
+  offer
+  cancel
+}
+
+model Offer {
+  id              String   @id @default(uuid())
+  nftId           String
+  nft             Nft      @relation(fields: [nftId], references: [id], onDelete: Cascade)
+
+  bidderAddress   String
+  amount          Decimal  @db.Decimal(18, 8)
+  expiration      DateTime
+  status          OfferStatus @default(active)
+
+  transactionHash String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([nftId])
+  @@index([bidderAddress])
+  @@index([status])
+}
+
+enum OfferStatus {
+  active
+  accepted
+  rejected
+  expired
+  canceled
+}
+
+model ContractEvent {
+  id              String   @id @default(uuid())
+
+  contractAddress String
+  eventName       String
+
+  blockNumber     Int
+  blockHash       String
+  transactionHash String
+  logIndex        Int
+
+  eventData       Json
+
+  processed       Boolean  @default(false)
+  processedAt     DateTime?
+
+  createdAt       DateTime @default(now())
+
+  @@unique([transactionHash, logIndex])
+  @@index([contractAddress, eventName])
+  @@index([blockNumber])
+  @@index([processed])
+}
+
+model PageStats {
+  id              String   @id @default(uuid())
+  pageId          String   @unique
+  page            Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  totalNfts       Int      @default(0)
+  totalVolume     Decimal  @db.Decimal(18, 8) @default(0)
+  floorPrice      Decimal? @db.Decimal(18, 8)
+  holders         Int      @default(0)
+
+  lastCalculated  DateTime @default(now())
+
+  @@index([pageId])
+}

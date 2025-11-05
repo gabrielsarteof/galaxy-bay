@@ -1,0 +1,590 @@
+/* Tailwind v4: @custom-variant permite customizar o comportamento do variant 'dark:' */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+@import "tailwindcss";
+
+/* Google Fonts - Geist, Geist Mono e Poppins */
+/* Essas fontes são carregadas via Next.js no layout.tsx */
+
+@layer utilities {
+  /* Page transitions */
+  .page-transition {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Scrollbar customizada - tema Galaxy Bay */
+  .scrollbar-galaxy {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-primary) transparent;
+  }
+
+  .scrollbar-galaxy::-webkit-scrollbar {
+    width: 4px;
+    height: 8px;
+  }
+
+  .scrollbar-galaxy::-webkit-scrollbar-thumb {
+    background-color: var(--color-primary);
+    border-radius: 4px;
+  }
+
+  .scrollbar-galaxy::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Classes de texto que reagem ao tema */
+  .text-primary {
+    color: var(--color-text-primary);
+  }
+
+  .text-secondary {
+    color: var(--color-text-secondary);
+  }
+
+  .text-muted {
+    color: var(--color-text-muted);
+  }
+
+  .text-inverse {
+    color: var(--color-text-inverse);
+  }
+
+  /* Cor da marca/brand do projeto */
+  .text-brand {
+    color: var(--color-brand);
+  }
+
+  .bg-brand {
+    background-color: var(--color-brand);
+  }
+
+  .border-brand {
+    border-color: var(--color-brand);
+  }
+
+  /* Classes de fundo */
+  .bg-surface {
+    background-color: var(--color-surface);
+  }
+
+  .bg-surface-elevated {
+    background-color: var(--color-surface-elevated);
+  }
+
+  .bg-surface-hover {
+    background-color: var(--color-surface-hover);
+  }
+
+  .hover\:bg-surface-hover:hover {
+    background-color: var(--color-surface-hover);
+  }
+
+  /* Classes de borda */
+  .border-light {
+    border-color: var(--color-border-light);
+  }
+
+  .border-muted {
+    border-color: var(--color-border-muted);
+  }
+
+  /* Classes de botão primário */
+  .bg-btn-primary {
+    background-color: var(--color-btn-primary-bg);
+  }
+
+  .hover\:bg-btn-primary-hover:hover {
+    background-color: var(--color-btn-primary-hover);
+  }
+
+  .text-btn-primary {
+    color: var(--color-btn-primary-text);
+  }
+
+  /* Classes de botão secundário */
+  .bg-btn-secondary {
+    background-color: var(--color-btn-secondary-bg);
+  }
+
+  .hover\:bg-btn-secondary-hover:hover {
+    background-color: var(--color-btn-secondary-hover);
+  }
+
+  .text-btn-secondary {
+    color: var(--color-btn-secondary-text);
+  }
+
+  .border-btn-secondary {
+    border-color: var(--color-btn-secondary-border);
+  }
+
+  /* Classes de input */
+  .bg-input {
+    background-color: var(--color-input-bg);
+  }
+
+  .border-input {
+    border-color: var(--color-input-border);
+  }
+
+  .focus\:border-input-focus:focus {
+    border-color: var(--color-input-border-focus);
+  }
+
+  .text-input {
+    color: var(--color-input-text);
+  }
+
+  .placeholder-input::placeholder {
+    color: var(--color-input-placeholder);
+  }
+
+  /* Estados - sucesso, erro, warning */
+  .text-success {
+    color: var(--color-success);
+  }
+
+  .bg-success {
+    background-color: var(--color-success);
+  }
+
+  .text-error {
+    color: var(--color-error);
+  }
+
+  .bg-error {
+    background-color: var(--color-error);
+  }
+
+  .text-warning {
+    color: var(--color-warning);
+  }
+
+  .bg-warning {
+    background-color: var(--color-warning);
+  }
+
+  /* Sombras personalizadas */
+  .shadow-menu {
+    box-shadow: var(--shadow-menu-dropdown);
+  }
+
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+
+  /* Classes de fonte - Inter */
+  .font-inter {
+    font-family: var(--font-family-inter);
+  }
+}
+
+/* CSS @property: permite transições suaves e type-safety para custom properties */
+@property --color-background {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #ffffff;
+}
+
+@property --color-surface {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #ffffff;
+}
+
+@property --color-surface-elevated {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #f9fafb;
+}
+
+@property --color-surface-hover {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #f3f4f6;
+}
+
+@property --color-text-primary {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #111827;
+}
+
+@property --color-text-secondary {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #6b7280;
+}
+
+@property --color-text-muted {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #9ca3af;
+}
+
+@property --color-text-inverse {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #ffffff;
+}
+
+@property --color-border-light {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #e5e7eb;
+}
+
+@property --color-border-muted {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #d1d5db;
+}
+
+@property --color-btn-primary-bg {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #4f46e5;
+}
+
+@property --color-btn-primary-hover {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #4338ca;
+}
+
+@property --color-btn-primary-text {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #ffffff;
+}
+
+@property --color-btn-secondary-bg {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #f9fafb;
+}
+
+@property --color-btn-secondary-hover {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #f3f4f6;
+}
+
+@property --color-btn-secondary-text {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #374151;
+}
+
+@property --color-btn-secondary-border {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #d1d5db;
+}
+
+@property --color-input-bg {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #f9fafb;
+}
+
+@property --color-input-border {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #d1d5db;
+}
+
+@property --color-input-border-focus {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #4f46e5;
+}
+
+@property --color-input-text {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #111827;
+}
+
+@property --color-input-placeholder {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #9ca3af;
+}
+
+@property --color-success {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #10b981;
+}
+
+@property --color-error {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #ef4444;
+}
+
+@property --color-warning {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #f59e0b;
+}
+
+@property --shadow-menu-dropdown {
+  syntax: '*';
+  inherits: true;
+  initial-value: 0 4px 8px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.05);
+}
+
+@property --shadow-card {
+  syntax: '*';
+  inherits: true;
+  initial-value: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+}
+
+/* Define as cores base no :root para serem referenciadas */
+:root {
+  /* Light mode - cores base */
+  --base-background: #ffffff;
+  --base-foreground: #111827;
+  --base-surface: #ffffff;
+  --base-surface-elevated: #f9fafb;
+  --base-surface-hover: #f3f4f6;
+  --base-text-primary: #111827;
+  --base-text-secondary: #6b7280;
+  --base-text-muted: #9ca3af;
+  --base-text-inverse: #ffffff;
+  --base-border-light: #e5e7eb;
+  --base-border-muted: #d1d5db;
+  --base-btn-primary-bg: #645394;
+  --base-btn-primary-hover: #534479;
+  --base-btn-primary-text: #ffffff;
+  --base-btn-secondary-bg: #f9fafb;
+  --base-btn-secondary-hover: #f3f4f6;
+  --base-btn-secondary-text: #374151;
+  --base-btn-secondary-border: #d1d5db;
+  --base-input-bg: #f9fafb;
+  --base-input-border: #d1d5db;
+  --base-input-border-focus: #645394;
+  --base-input-text: #111827;
+  --base-input-placeholder: #9ca3af;
+  --base-success: #10b981;
+  --base-error: #ef4444;
+  --base-warning: #f59e0b;
+  --base-shadow-menu-dropdown: 0 4px 8px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.05);
+  --base-shadow-card: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+}
+
+/* Theme variables referenciando as cores base */
+@theme inline {
+  --color-background: var(--base-background);
+  --color-foreground: var(--base-foreground);
+  --color-surface: var(--base-surface);
+  --color-surface-elevated: var(--base-surface-elevated);
+  --color-surface-hover: var(--base-surface-hover);
+  --color-text-primary: var(--base-text-primary);
+  --color-text-secondary: var(--base-text-secondary);
+  --color-text-muted: var(--base-text-muted);
+  --color-text-inverse: var(--base-text-inverse);
+  --color-border-light: var(--base-border-light);
+  --color-border-muted: var(--base-border-muted);
+  --color-btn-primary-bg: var(--base-btn-primary-bg);
+  --color-btn-primary-hover: var(--base-btn-primary-hover);
+  --color-btn-primary-text: var(--base-btn-primary-text);
+  --color-btn-secondary-bg: var(--base-btn-secondary-bg);
+  --color-btn-secondary-hover: var(--base-btn-secondary-hover);
+  --color-btn-secondary-text: var(--base-btn-secondary-text);
+  --color-btn-secondary-border: var(--base-btn-secondary-border);
+  --color-input-bg: var(--base-input-bg);
+  --color-input-border: var(--base-input-border);
+  --color-input-border-focus: var(--base-input-border-focus);
+  --color-input-text: var(--base-input-text);
+  --color-input-placeholder: var(--base-input-placeholder);
+  --color-success: var(--base-success);
+  --color-error: var(--base-error);
+  --color-warning: var(--base-warning);
+  --shadow-menu-dropdown: var(--base-shadow-menu-dropdown);
+  --shadow-card: var(--base-shadow-card);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-poppins: var(--font-poppins);
+  --font-inter: var(--font-inter);
+}
+
+@theme {
+  /* Cores fixas que não mudam com tema - Brand colors do Galaxy Bay */
+  --color-brand: #645394;
+  --color-brand-hover: #534479;
+  --color-brand-active: #4a3b6d;
+  --color-primary: #645394;
+  --color-primary-hover: #534479;
+  --color-secondary: #06b6d4;
+  --color-secondary-hover: #0891b2;
+  --color-info: #3b82f6;
+
+  /* Tipografia */
+  --font-family-sans: var(--font-geist-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-family-mono: var(--font-geist-mono), "Courier New", monospace;
+  --font-family-poppins: var(--font-poppins), sans-serif;
+  --font-family-inter: var(--font-inter), sans-serif;
+}
+
+/* Dark mode: atualiza as variáveis base no :root */
+[data-theme="dark"] {
+  --base-background: #0a0a0a;
+  --base-foreground: #f9fafb;
+  --base-surface: #171717;
+  --base-surface-elevated: #262626;
+  --base-surface-hover: #404040;
+  --base-text-primary: #f9fafb;
+  --base-text-secondary: #d1d5db;
+  --base-text-muted: #9ca3af;
+  --base-text-inverse: #111827;
+  --base-border-light: #404040;
+  --base-border-muted: #525252;
+  --base-btn-primary-bg: #7d6bb3;
+  --base-btn-primary-hover: #9282c7;
+  --base-btn-primary-text: #ffffff;
+  --base-btn-secondary-bg: #262626;
+  --base-btn-secondary-hover: #404040;
+  --base-btn-secondary-text: #f9fafb;
+  --base-btn-secondary-border: #404040;
+  --base-input-bg: #171717;
+  --base-input-border: #404040;
+  --base-input-border-focus: #7d6bb3;
+  --base-input-text: #f9fafb;
+  --base-input-placeholder: #737373;
+  --base-success: #10b981;
+  --base-error: #f87171;
+  --base-warning: #fbbf24;
+  --base-shadow-menu-dropdown: 0 4px 8px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+  --base-shadow-card: 0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+}
+
+[data-theme="dark"] {
+  @theme {
+    /* Ajustes no tema dark se necessário */
+    --color-brand: #7d6bb3;
+    --color-brand-hover: #9282c7;
+    --color-brand-active: #a89ad0;
+    --color-primary: #7d6bb3;
+    --color-primary-hover: #9282c7;
+    --color-secondary: #22d3ee;
+    --color-secondary-hover: #67e8f9;
+    --color-info: #60a5fa;
+  }
+}
+
+/* Transições suaves entre temas */
+html {
+  transition: background-color 0.2s cubic-bezier(0.2, 0, 0, 1),
+              color 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  width: 100%;
+  height: 100%;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-family-sans);
+  font-weight: 400;
+}
+
+#root,
+#__next {
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* Screen reader only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Remove outline padrão do browser */
+*:focus,
+*:focus-visible {
+  outline: none;
+}
+
+/* Remove box-shadow padrão em inputs/buttons */
+button:focus:not([class*="shadow-"]),
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Animação skeleton para loading states */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-elevated) 25%,
+    var(--color-surface-hover) 37%,
+    var(--color-surface-elevated) 63%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Animações de entrada suave */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Utilitários adicionais */
+.transition-theme {
+  transition: background-color 0.2s cubic-bezier(0.2, 0, 0, 1),
+              color 0.2s cubic-bezier(0.2, 0, 0, 1),
+              border-color 0.2s cubic-bezier(0.2, 0, 0, 1);
+}

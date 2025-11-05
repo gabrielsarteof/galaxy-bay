@@ -1,0 +1,36 @@
+/* Custom NProgress styles with Galaxy Bay gradient */
+
+#nprogress {
+  pointer-events: none;
+}
+
+#nprogress .bar {
+  background: linear-gradient(100deg, #FFB86A 0%, #E839C6 33%, #9B33F8 66%, #3D54FF 100%);
+  position: fixed;
+  z-index: 9999;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+}
+
+#nprogress .peg {
+  display: block;
+  position: absolute;
+  right: 0px;
+  width: 100px;
+  height: 100%;
+  box-shadow: 0 0 10px #E839C6, 0 0 5px #E839C6;
+  opacity: 1.0;
+  transform: rotate(3deg) translate(0px, -4px);
+}
+
+/* Remove spinner */
+#nprogress .spinner {
+  display: none;
+}
+
+/* Fancy blur effect */
+#nprogress .bar {
+  box-shadow: 0 0 2px rgba(227, 57, 198, 0.5);
+}

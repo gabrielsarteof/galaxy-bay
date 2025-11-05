@@ -1,0 +1,162 @@
+/* Custom styles for react-image-crop to match Patreon design */
+
+/* White box around crop area with minimal margin */
+.ReactCrop {
+  position: relative;
+  display: block;
+  cursor: crosshair;
+  width: 100%;
+  height: 100%;
+}
+
+.ReactCrop__image {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  touch-action: manipulation;
+  object-fit: cover !important;
+}
+
+/* Remove o overlay preto ao redor da área de crop */
+.ReactCrop rect[fill="black"] {
+  display: none !important;
+}
+
+.ReactCrop svg rect[fill-opacity="0.5"] {
+  display: none !important;
+}
+
+.ReactCrop__crop-selection {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translate3d(0, 0, 0);
+  box-sizing: border-box;
+  cursor: move;
+  box-shadow: none !important;
+  border: 2px solid #111827;
+  border-radius: 4px;
+}
+
+/* Make corner handles look like black balls/dots */
+.ReactCrop__drag-handle {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background-color: #000000;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Corner handles */
+.ReactCrop__drag-handle.ord-nw {
+  top: -8px;
+  left: -8px;
+  cursor: nw-resize;
+}
+
+.ReactCrop__drag-handle.ord-ne {
+  top: -8px;
+  right: -8px;
+  cursor: ne-resize;
+}
+
+.ReactCrop__drag-handle.ord-sw {
+  bottom: -8px;
+  left: -8px;
+  cursor: sw-resize;
+}
+
+.ReactCrop__drag-handle.ord-se {
+  bottom: -8px;
+  right: -8px;
+  cursor: se-resize;
+}
+
+/* Edge handles */
+.ReactCrop__drag-handle.ord-n {
+  top: -8px;
+  left: 50%;
+  margin-left: -8px;
+  cursor: n-resize;
+}
+
+.ReactCrop__drag-handle.ord-s {
+  bottom: -8px;
+  left: 50%;
+  margin-left: -8px;
+  cursor: s-resize;
+}
+
+.ReactCrop__drag-handle.ord-e {
+  top: 50%;
+  right: -8px;
+  margin-top: -8px;
+  cursor: e-resize;
+}
+
+.ReactCrop__drag-handle.ord-w {
+  top: 50%;
+  left: -8px;
+  margin-top: -8px;
+  cursor: w-resize;
+}
+
+/* Hide edge handles for cleaner look (Patreon only shows corners) */
+.ReactCrop__drag-handle.ord-n,
+.ReactCrop__drag-handle.ord-s,
+.ReactCrop__drag-handle.ord-e,
+.ReactCrop__drag-handle.ord-w {
+  display: none;
+}
+
+/* Grid lines */
+.ReactCrop__rule-of-thirds-vt::before,
+.ReactCrop__rule-of-thirds-vt::after,
+.ReactCrop__rule-of-thirds-hz::before,
+.ReactCrop__rule-of-thirds-hz::after {
+  content: '';
+  display: block;
+  position: absolute;
+  background-color: #111827;
+  opacity: 0.4;
+}
+
+.ReactCrop__rule-of-thirds-vt::before {
+  width: 1px;
+  height: 100%;
+  left: 33.3333%;
+  top: 0;
+}
+
+.ReactCrop__rule-of-thirds-vt::after {
+  width: 1px;
+  height: 100%;
+  left: 66.6666%;
+  top: 0;
+}
+
+.ReactCrop__rule-of-thirds-hz::before {
+  width: 100%;
+  height: 1px;
+  top: 33.3333%;
+  left: 0;
+}
+
+.ReactCrop__rule-of-thirds-hz::after {
+  width: 100%;
+  height: 1px;
+  top: 66.6666%;
+  left: 0;
+}
+
+/* Disabled state */
+.ReactCrop--disabled .ReactCrop__crop-selection {
+  cursor: inherit;
+}
+
+.ReactCrop--disabled .ReactCrop__drag-handle {
+  cursor: inherit;
+}
+
