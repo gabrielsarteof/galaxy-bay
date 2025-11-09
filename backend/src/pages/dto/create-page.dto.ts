@@ -60,4 +60,35 @@ export class CreatePageDto {
   @ArrayUnique()
   @IsString({ each: true })
   tags?: string[];
+
+  @ApiPropertyOptional({ example: 'https://twitter.com/galaxy-bay', description: 'URL do perfil no Twitter' })
+  @IsOptional()
+  @IsUrl()
+  twitterUrl?: string;
+
+  @ApiPropertyOptional({ example: 'https://instagram.com/galaxy-bay', description: 'URL do perfil no Instagram' })
+  @IsOptional()
+  @IsUrl()
+  instagramUrl?: string;
+
+  @ApiPropertyOptional({ example: 'https://galaxy-bay.com', description: 'URL do website' })
+  @IsOptional()
+  @IsUrl()
+  websiteUrl?: string;
+
+  @ApiPropertyOptional({ example: 'https://discord.gg/galaxy-bay', description: 'URL do servidor Discord' })
+  @IsOptional()
+  @IsUrl()
+  discordUrl?: string;
+
+  @ApiPropertyOptional({ example: 'Holders ganham acesso exclusivo a eventos e lançamentos.', description: 'Texto descrevendo benefícios para a comunidade' })
+  @IsOptional()
+  @IsString()
+  benefitsText?: string;
+
+  @ApiPropertyOptional({ example: ['uuid1', 'uuid2'], description: 'IDs dos NFTs em destaque' })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  featuredNftIds?: string[];
 }
