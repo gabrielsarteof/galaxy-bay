@@ -51,6 +51,34 @@ export const updatePageSchema = z.object({
   status: z.enum(['draft', 'published']).optional(),
   avatarUrl: z.string().url().optional(),
   bannerUrl: z.string().url().optional(),
+  twitterUrl: z
+    .string()
+    .url('URL do Twitter inválida')
+    .optional()
+    .or(z.literal('')),
+  instagramUrl: z
+    .string()
+    .url('URL do Instagram inválida')
+    .optional()
+    .or(z.literal('')),
+  websiteUrl: z
+    .string()
+    .url('URL do website inválida')
+    .optional()
+    .or(z.literal('')),
+  discordUrl: z
+    .string()
+    .url('URL do Discord inválida')
+    .optional()
+    .or(z.literal('')),
+  benefitsText: z
+    .string()
+    .max(500, 'O texto de benefícios deve ter no máximo 500 caracteres')
+    .optional(),
+  featuredNftIds: z
+    .array(z.string())
+    .max(4, 'Você pode destacar no máximo 4 NFTs')
+    .optional(),
 });
 
 export type UpdatePageFormData = z.infer<typeof updatePageSchema>;
