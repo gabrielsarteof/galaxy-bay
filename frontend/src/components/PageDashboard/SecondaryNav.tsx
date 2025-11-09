@@ -10,6 +10,7 @@ const tabs = [
   { id: 'comunidade', label: 'Comunidade' },
   { id: 'atividade', label: 'Atividade' },
   { id: 'sobre', label: 'Sobre' },
+  { id: 'configuracoes', label: 'Configurações' },
 ];
 
 /**

@@ -18,6 +18,7 @@ import CollectionsTab from '@/components/PageDashboard/tabs/CollectionsTab';
 import CommunityTab from '@/components/PageDashboard/tabs/CommunityTab';
 import ActivityTab from '@/components/PageDashboard/tabs/ActivityTab';
 import AboutTab from '@/components/PageDashboard/tabs/AboutTab';
+import SettingsTab from '@/components/PageDashboard/tabs/SettingsTab';
 
 /**
  * Página principal do dashboard do criador.
@@ -146,6 +147,8 @@ export default function PageDashboard() {
         return <ActivityTab page={page!} />;
       case 'sobre':
         return <AboutTab page={page!} />;
+      case 'configuracoes':
+        return <SettingsTab page={page!} />;
       default:
         return <HomeTab page={page!} />;
     }
