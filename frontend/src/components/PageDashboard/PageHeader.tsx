@@ -21,7 +21,12 @@ const PageHeader: React.FC<PageHeaderProps> = ({ page, isEditing, dirty, onSave,
     <div className="flex px-6 py-4 justify-between items-center">
       {page.status !== 'published' && <span className="text-gray-600">Sua página ainda não foi publicada</span>}
       <div className="flex space-x-4">
-        <Link href={`/page/${page.slug}`} className="inline-flex items-center px-5 py-2 bg-gray-100 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-200">
+        <Link
+          href={`/${page.slug}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center px-5 py-2 bg-gray-100 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-200"
+        >
           <Eye className="w-4 h-4 mr-2" /> Visualizar página
         </Link>
         {page.status !== 'published' && (
