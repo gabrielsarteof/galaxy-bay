@@ -48,15 +48,15 @@ export class NftService {
         throw new BadRequestException('Transaction not found or failed');
       }
 
-      if (!dto.tokenId && dto.tokenId !== 0) {
+      if (!dto.tokenId) {
         const extractedTokenId = await this.blockchain.verifyMintTransaction(dto.transactionHash);
         if (extractedTokenId === null) {
           throw new BadRequestException('Could not extract tokenId from transaction');
         }
-        dto.tokenId = extractedTokenId;
+        dto.tokenId = String(extractedTokenId);
       }
 
-      const onChainOwner = await this.blockchain.getNftOwner(dto.tokenId);
+      const onChainOwner = await this.blockchain.getNftOwner(Number(dto.tokenId));
 
       if (onChainOwner && onChainOwner.toLowerCase() !== user.address.toLowerCase()) {
         throw new ForbiddenException('NFT owner on blockchain does not match requesting user');
@@ -149,6 +149,52 @@ export class NftService {
       },
       orderBy: { listedAt: 'desc' },
       take: 50,
+    });
+  }
+
+  async findFeatured(limit: number = 8) {
+    return this.prisma.nft.findMany({
+      where: {
+        status: 'listed',
+        price: { gt: 0 },
+      },
+      select: {
+        id: true,
+        tokenId: true,
+        name: true,
+        description: true,
+        imageUrl: true,
+        price: true,
+        status: true,
+        listedAt: true,
+        createdAt: true,
+        page: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+        owner: {
+          select: {
+            id: true,
+            username: true,
+            address: true,
+          },
+        },
+        collection: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+      },
+      orderBy: [
+        { listedAt: 'desc' },
+        { createdAt: 'desc' },
+      ],
+      take: limit,
     });
   }
 

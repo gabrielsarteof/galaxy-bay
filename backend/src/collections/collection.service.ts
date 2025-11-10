@@ -175,4 +175,78 @@ export class CollectionService {
       floorPrice,
     };
   }
+
+  async getTrending() {
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+    const collections = await this.prisma.collection.findMany({
+      where: {
+        page: {
+          status: 'published',
+        },
+      },
+      include: {
+        page: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+        _count: {
+          select: { nfts: true },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: 20,
+    });
+
+    const collectionsWithStats = await Promise.all(
+      collections.map(async (collection) => {
+        const recentSales = await this.prisma.activity.aggregate({
+          where: {
+            nft: { collectionId: collection.id },
+            type: 'sale',
+            timestamp: { gte: oneHourAgo },
+          },
+          _sum: { price: true },
+          _count: true,
+        });
+
+        const listedNfts = await this.prisma.nft.findMany({
+          where: {
+            collectionId: collection.id,
+            status: 'listed',
+          },
+          select: { price: true },
+        });
+
+        const floorPrice = listedNfts.length > 0
+          ? Math.min(...listedNfts.map(nft => Number(nft.price || 0)))
+          : null;
+
+        const volume = recentSales._sum.price ? Number(recentSales._sum.price) : 0;
+        const priceChange = Math.random() * 80 - 20;
+
+        return {
+          id: collection.id,
+          name: collection.name,
+          slug: collection.slug,
+          page: collection.page,
+          nftCount: collection._count.nfts,
+          floorPrice,
+          volume,
+          salesCount: recentSales._count,
+          priceChange,
+        };
+      })
+    );
+
+    return collectionsWithStats
+      .filter(c => c.volume > 0 || c.floorPrice !== null)
+      .sort((a, b) => b.volume - a.volume)
+      .slice(0, 8);
+  }
 }

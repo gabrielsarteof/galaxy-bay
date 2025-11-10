@@ -37,13 +37,58 @@ export class BlockchainService implements OnModuleInit {
     try {
       this.logger.log('Initializing Blockchain Service...');
 
-      // Setup provider
+      // Setup provider with fallback RPCs
       const rpcUrl = this.config.get<string>('RPC_URL');
       if (!rpcUrl) {
         throw new Error('RPC_URL not configured in environment');
       }
 
-      this.provider = new ethers.JsonRpcProvider(rpcUrl);
+      // Lista de RPCs públicos da Sepolia com fallback
+      const fallbackRpcs = [
+        rpcUrl, // Primeiro tenta o configurado
+        'https://ethereum-sepolia-rpc.publicnode.com',
+        'https://rpc2.sepolia.org',
+        'https://sepolia.gateway.tenderly.co',
+        'https://eth-sepolia-public.unifra.io',
+      ];
+
+      // Tentar conectar com cada RPC até encontrar um que funcione
+      let connected = false;
+      let lastError: any = null;
+
+      for (const rpc of fallbackRpcs) {
+        try {
+          this.logger.log(`Trying to connect to RPC: ${rpc}`);
+          const testProvider = new ethers.JsonRpcProvider(rpc, undefined, {
+            staticNetwork: true, // Evita detecção de rede no init
+            polling: true,
+            pollingInterval: 12000, // 12 segundos (tempo de bloco do Sepolia)
+          });
+
+          // Testar conexão com timeout
+          const blockNumber = await Promise.race([
+            testProvider.getBlockNumber(),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Timeout')), 5000)
+            ),
+          ]);
+
+          this.provider = testProvider;
+          this.logger.log(`Successfully connected to ${rpc} at block ${blockNumber}`);
+          connected = true;
+          break;
+        } catch (error) {
+          this.logger.warn(`Failed to connect to ${rpc}: ${error.message}`);
+          lastError = error;
+          continue;
+        }
+      }
+
+      if (!connected) {
+        throw new Error(
+          `Failed to connect to any RPC endpoint. Last error: ${lastError?.message || 'Unknown'}`
+        );
+      }
 
       // Setup contract addresses
       this.nftContractAddress = this.config.get<string>(

@@ -94,4 +94,28 @@ export class ActivityService {
   async getRecentActivities(pageId: string, limit = 5) {
     return this.findByPage(pageId, { limit });
   }
+
+  async findRecent(limit = 10) {
+    return this.prisma.activity.findMany({
+      include: {
+        nft: {
+          select: {
+            id: true,
+            tokenId: true,
+            name: true,
+            imageUrl: true,
+            page: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { timestamp: 'desc' },
+      take: limit,
+    });
+  }
 }

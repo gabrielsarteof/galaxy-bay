@@ -16,7 +16,9 @@ export class IndexerService implements OnModuleInit {
   async onModuleInit() {
     this.logger.log('Initializing blockchain indexer...');
     await this.indexHistoricalEvents();
-    this.startEventListeners();
+    // Desabilitado: event listeners em tempo real causam erro "filter not found"
+    // Usando apenas periodic sync a cada 10 minutos
+    // this.startEventListeners();
   }
 
   private async indexHistoricalEvents() {
@@ -33,16 +35,36 @@ export class IndexerService implements OnModuleInit {
         orderBy: { blockNumber: 'desc' },
       });
 
-      const fromBlock = lastEvent ? lastEvent.blockNumber + 1 : 0;
-      const toBlock = 'latest';
+      const currentBlock = await this.blockchain.getCurrentBlockNumber();
+      const fromBlock = lastEvent ? lastEvent.blockNumber + 1 : currentBlock - 10000; // Últimos 10k blocos se for primeira vez
+      const toBlock = currentBlock;
 
-      this.logger.log(`Indexing from block ${fromBlock} to ${toBlock}`);
+      this.logger.log(`Indexing from block ${fromBlock} to ${toBlock} (total: ${toBlock - fromBlock} blocks)`);
 
-      await Promise.all([
-        this.indexTransferEvents(fromBlock, toBlock),
-        this.indexItemListedEvents(fromBlock, toBlock),
-        this.indexItemSoldEvents(fromBlock, toBlock),
-      ]);
+      // Se o range for maior que 10k blocos, dividir em chunks
+      const CHUNK_SIZE = 10000;
+      const chunks: Array<{ from: number; to: number }> = [];
+
+      for (let start = fromBlock; start <= toBlock; start += CHUNK_SIZE) {
+        const end = Math.min(start + CHUNK_SIZE - 1, toBlock);
+        chunks.push({ from: start, to: end });
+      }
+
+      this.logger.log(`Splitting into ${chunks.length} chunks`);
+
+      // Processar chunks sequencialmente para evitar rate limits
+      for (const chunk of chunks) {
+        this.logger.log(`Processing chunk: blocks ${chunk.from} to ${chunk.to}`);
+
+        await Promise.all([
+          this.indexTransferEvents(chunk.from, chunk.to),
+          this.indexItemListedEvents(chunk.from, chunk.to),
+          this.indexItemSoldEvents(chunk.from, chunk.to),
+        ]);
+
+        // Pequeno delay entre chunks para evitar rate limiting
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
 
       this.logger.log('Historical indexing completed');
     } catch (error) {
@@ -52,42 +74,42 @@ export class IndexerService implements OnModuleInit {
     }
   }
 
-  private async indexTransferEvents(fromBlock: number | string, toBlock: number | string) {
-    const events = await this.blockchain.queryTransferEvents(
-      typeof fromBlock === 'string' ? 0 : fromBlock,
-      toBlock,
-    );
+  private async indexTransferEvents(fromBlock: number, toBlock: number) {
+    try {
+      const events = await this.blockchain.queryTransferEvents(fromBlock, toBlock);
+      this.logger.log(`Found ${events.length} Transfer events in blocks ${fromBlock}-${toBlock}`);
 
-    this.logger.log(`Found ${events.length} Transfer events`);
-
-    for (const event of events) {
-      await this.processTransferEvent(event);
+      for (const event of events) {
+        await this.processTransferEvent(event);
+      }
+    } catch (error) {
+      this.logger.error(`Failed to index Transfer events for blocks ${fromBlock}-${toBlock}`, error.message);
     }
   }
 
-  private async indexItemListedEvents(fromBlock: number | string, toBlock: number | string) {
-    const events = await this.blockchain.queryItemListedEvents(
-      typeof fromBlock === 'string' ? 0 : fromBlock,
-      toBlock,
-    );
+  private async indexItemListedEvents(fromBlock: number, toBlock: number) {
+    try {
+      const events = await this.blockchain.queryItemListedEvents(fromBlock, toBlock);
+      this.logger.log(`Found ${events.length} ItemListed events in blocks ${fromBlock}-${toBlock}`);
 
-    this.logger.log(`Found ${events.length} ItemListed events`);
-
-    for (const event of events) {
-      await this.processItemListedEvent(event);
+      for (const event of events) {
+        await this.processItemListedEvent(event);
+      }
+    } catch (error) {
+      this.logger.error(`Failed to index ItemListed events for blocks ${fromBlock}-${toBlock}`, error.message);
     }
   }
 
-  private async indexItemSoldEvents(fromBlock: number | string, toBlock: number | string) {
-    const events = await this.blockchain.queryItemSoldEvents(
-      typeof fromBlock === 'string' ? 0 : fromBlock,
-      toBlock,
-    );
+  private async indexItemSoldEvents(fromBlock: number, toBlock: number) {
+    try {
+      const events = await this.blockchain.queryItemSoldEvents(fromBlock, toBlock);
+      this.logger.log(`Found ${events.length} ItemSold events in blocks ${fromBlock}-${toBlock}`);
 
-    this.logger.log(`Found ${events.length} ItemSold events`);
-
-    for (const event of events) {
-      await this.processItemSoldEvent(event);
+      for (const event of events) {
+        await this.processItemSoldEvent(event);
+      }
+    } catch (error) {
+      this.logger.error(`Failed to index ItemSold events for blocks ${fromBlock}-${toBlock}`, error.message);
     }
   }
 

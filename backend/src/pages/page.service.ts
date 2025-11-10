@@ -2,9 +2,11 @@ import { Injectable, ConflictException, NotFoundException, ForbiddenException, I
 import { PrismaService } from '@/../prisma/prisma.service';
 import { CreatePageDto } from './dto/create-page.dto';
 import { UpdatePageDto } from './dto/update-page.dto';
-import { Page } from '@prisma/client';
+import { DiscoverQueryDto } from './dto/discover-query.dto';
+import { Page, Prisma } from '@prisma/client';
 import { IStorageService } from '@/core/interfaces/storage.interface';
 import { ImageGeneratorService } from '@/infrastructure/storage/image-generator.service';
+import axios from 'axios';
 
 @Injectable()
 export class PageService {
@@ -48,7 +50,7 @@ export class PageService {
 
     console.log('[PageService.create] Validações OK, criando página...');
 
-    // Cria página SEM imagens primeiro (precisa do ID)
+    // Cria página
     const page = await this.prisma.page.create({
       data: {
         ownerId,
@@ -59,46 +61,41 @@ export class PageService {
         status: dto.status,
         category: dto.category,
         tags: dto.tags,
-        // avatarUrl e bannerUrl serão adicionados depois
       },
     });
 
-    console.log(`[PageService] Página criada, gerando imagens padrão...`);
-
+    // Gera imagens padrão de forma síncrona
     try {
-      const version = Date.now();
-
-      // Gera e salva avatar (converte SVG para PNG)
-      const avatarUrl = this.imageGenerator.getDefaultAvatarUrl(page.name);
-      const avatarResponse = await fetch(avatarUrl);
-      const avatarSvgBuffer = Buffer.from(await avatarResponse.arrayBuffer());
-      const avatarPngBuffer = await this.imageGenerator.convertAvatarToPng(avatarSvgBuffer);
-      const avatarPath = `avatars/${page.id}/avatar.png`;
-      await this.storage.upload(avatarPath, avatarPngBuffer, 'image/png');
-      const avatarPublicUrl = this.storage.getPublicUrl(avatarPath, version);
-
-      // Gera e salva banner (converte SVG para PNG)
-      const bannerSvgBuffer = this.imageGenerator.generateDefaultBanner(page.name);
-      const bannerPngBuffer = await this.imageGenerator.convertBannerToPng(bannerSvgBuffer);
-      const bannerPath = `banners/${page.id}/banner.png`;
-      await this.storage.upload(bannerPath, bannerPngBuffer, 'image/png');
-      const bannerPublicUrl = this.storage.getPublicUrl(bannerPath, version);
-
-      // Atualiza página com as URLs
-      const updatedPage = await this.prisma.page.update({
-        where: { id: page.id },
-        data: {
-          avatarUrl: avatarPublicUrl,
-          bannerUrl: bannerPublicUrl,
-        },
-      });
-
-      console.log(`[PageService] ✅ Imagens salvas no storage e banco!`);
-      return updatedPage;
+      await this.generatePageImagesAsync(page.id, page.name);
     } catch (error) {
-      console.error('[PageService] ❌ Erro ao gerar imagens:', error);
-      // Retorna página mesmo sem imagens
-      return page;
+      console.error('[PageService] Erro ao gerar imagens:', error);
+    }
+
+    return page;
+  }
+
+  /**
+   * Gera imagens padrão para uma página em background.
+   * Este método roda de forma assíncrona e não bloqueia a criação da página.
+   */
+  private async generatePageImagesAsync(pageId: string, pageName: string): Promise<void> {
+    try {
+      // Gera e salva avatar
+      const avatarUrl = this.imageGenerator.getDefaultAvatarUrl(pageName);
+      const avatarResponse = await axios.get(avatarUrl, { responseType: 'arraybuffer' });
+      const avatarSvgBuffer = Buffer.from(avatarResponse.data);
+      const avatarPngBuffer = await this.imageGenerator.convertAvatarToPng(avatarSvgBuffer);
+      const avatarPath = `avatars/${pageId}/avatar.png`;
+      await this.storage.upload(avatarPath, avatarPngBuffer, 'image/png');
+
+      // Gera e salva banner
+      const bannerSvgBuffer = this.imageGenerator.generateDefaultBanner(pageName);
+      const bannerPngBuffer = await this.imageGenerator.convertBannerToPng(bannerSvgBuffer);
+      const bannerPath = `banners/${pageId}/banner.png`;
+      await this.storage.upload(bannerPath, bannerPngBuffer, 'image/png');
+    } catch (error) {
+      console.error('[PageService] Erro ao gerar imagens:', error);
+      throw error;
     }
   }
 
@@ -164,37 +161,25 @@ export class PageService {
       banner?: Express.Multer.File[];
     },
   ): Promise<Page> {
-    await this.findOneById(ownerId, id);
-
-    const updateData: Partial<Page> = {};
-    const version = Date.now();
+    const page = await this.findOneById(ownerId, id);
 
     if (files.avatar && files.avatar.length > 0) {
       const file = files.avatar[0];
-      // Converte para PNG e padroniza extensão
       const pngBuffer = await this.imageGenerator.convertAvatarToPng(file.buffer);
       const filePath = `avatars/${id}/avatar.png`;
-
       await this.storage.upload(filePath, pngBuffer, 'image/png');
-
-      updateData.avatarUrl = this.storage.getPublicUrl(filePath, version);
     }
 
     if (files.banner && files.banner.length > 0) {
       const file = files.banner[0];
-      // Converte para PNG e padroniza extensão
       const pngBuffer = await this.imageGenerator.convertBannerToPng(file.buffer);
       const filePath = `banners/${id}/banner.png`;
-
       await this.storage.upload(filePath, pngBuffer, 'image/png');
-
-      updateData.bannerUrl = this.storage.getPublicUrl(filePath, version);
     }
 
-    return this.prisma.page.update({
-      where: { id },
-      data: updateData,
-    });
+    // Retorna página sem modificar avatarUrl/bannerUrl no banco
+    // URLs são construídas dinamicamente no frontend usando pageId
+    return page;
   }
 
   async getStats(slug: string) {
@@ -298,5 +283,83 @@ export class PageService {
       topHolders,
       benefitsText: page.benefitsText,
     };
+  }
+
+  async discover(query: DiscoverQueryDto) {
+    const { category, search, page = 1, limit = 12, sortBy = 'recent' } = query;
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.PageWhereInput = {
+      status: 'published',
+      ...(category && category !== 'Tudo' && { category }),
+      ...(search && {
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } },
+          { tags: { hasSome: [search] } },
+        ],
+      }),
+    };
+
+    const orderBy: Prisma.PageOrderByWithRelationInput =
+      sortBy === 'popular' ? { viewCount: 'desc' } :
+      sortBy === 'volume' ? { salesCount: 'desc' } :
+      sortBy === 'name' ? { name: 'asc' } :
+      { createdAt: 'desc' };
+
+    const [pages, total] = await Promise.all([
+      this.prisma.page.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy,
+        include: {
+          owner: { select: { address: true, username: true } },
+          _count: { select: { nfts: true } },
+        },
+      }),
+      this.prisma.page.count({ where }),
+    ]);
+
+    return {
+      data: pages,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async getTrending(limit: number = 5) {
+    const pages = await this.prisma.page.findMany({
+      where: { status: 'published' },
+      take: limit,
+      orderBy: [
+        { salesCount: 'desc' },
+        { viewCount: 'desc' },
+      ],
+      include: {
+        owner: { select: { address: true, username: true } },
+        _count: { select: { nfts: true } },
+      },
+    });
+
+    return pages;
+  }
+
+  async getCategories() {
+    const pages = await this.prisma.page.findMany({
+      where: {
+        status: 'published',
+        category: { not: null },
+      },
+      select: { category: true },
+      distinct: ['category'],
+    });
+
+    const categories = ['Tudo', ...pages.map(p => p.category).filter(Boolean)];
+    return categories;
   }
 }
