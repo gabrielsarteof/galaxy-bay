@@ -11,18 +11,22 @@ import {
   UseInterceptors,
   Put,
   UploadedFiles,
+  Query,
 } from '@nestjs/common';
 import { PageService } from './page.service';
 import { CreatePageDto } from './dto/create-page.dto';
 import { PageResponseDto } from './dto/page-response.dto';
-import { JwtAuthGuard } from '@/auth/jwt-auth.guard';
+import { DiscoverQueryDto } from './dto/discover-query.dto';
+import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
 import { Request as ExpressRequest } from 'express';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
+  ApiQuery,
 } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import type { Page as PageModel } from '@prisma/client';
 import { UpdatePageDto } from './dto/update-page.dto';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
@@ -76,6 +80,28 @@ export class PageController {
     return this.toDto(page);
   }
 
+
+  @Get('discover')
+  @ApiOperation({ summary: 'Descobrir páginas publicadas com filtros' })
+  @ApiResponse({ status: 200, description: 'Lista de páginas descobertas' })
+  async discover(@Query() query: DiscoverQueryDto) {
+    return this.pageService.discover(query);
+  }
+
+  @Get('trending')
+  @ApiOperation({ summary: 'Obter páginas em destaque' })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiResponse({ status: 200, description: 'Páginas em destaque' })
+  async trending(@Query('limit') limit?: string) {
+    return this.pageService.getTrending(limit ? parseInt(limit, 10) : 5);
+  }
+
+  @Get('categories')
+  @ApiOperation({ summary: 'Listar categorias disponíveis' })
+  @ApiResponse({ status: 200, description: 'Lista de categorias' })
+  async categories() {
+    return this.pageService.getCategories();
+  }
 
   @UseGuards(JwtAuthGuard)
   // @UseInterceptors(PageImageInterceptor) // TEMPORARIAMENTE DESABILITADO

@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { ActivityService } from './activity.service';
 import { CreateActivityDto } from './dto/create-activity.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { ActivityType } from '@prisma/client';
 
@@ -26,6 +26,15 @@ export class ActivityController {
   @ApiOperation({ summary: 'Registrar nova atividade' })
   create(@Body() createActivityDto: CreateActivityDto) {
     return this.activityService.create(createActivityDto);
+  }
+
+  @Get('recent')
+  @ApiOperation({ summary: 'Listar atividades recentes da plataforma' })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  findRecent(
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit?: number,
+  ) {
+    return this.activityService.findRecent(limit);
   }
 
   @Get('page/:pageId')

@@ -12,7 +12,7 @@ import {
 import { CollectionService } from './collection.service';
 import { CreateCollectionDto } from './dto/create-collection.dto';
 import { UpdateCollectionDto } from './dto/update-collection.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 
 interface RequestWithUser extends Request {
@@ -23,6 +23,12 @@ interface RequestWithUser extends Request {
 @Controller('collections')
 export class CollectionController {
   constructor(private readonly collectionService: CollectionService) {}
+
+  @Get('trending')
+  @ApiOperation({ summary: 'Coleções em tendência' })
+  trending() {
+    return this.collectionService.getTrending();
+  }
 
   @Post('page/:pageId')
   @UseGuards(JwtAuthGuard)

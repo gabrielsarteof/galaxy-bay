@@ -1,6 +1,6 @@
 import { Controller, Post, Body, UseGuards, Request, Get, Param, Query, Put, ParseIntPipe, DefaultValuePipe } from '@nestjs/common';
 import { NftService }                                from './nft.service';
-import { JwtAuthGuard }                              from '../auth/jwt-auth.guard';
+import { JwtAuthGuard }                              from '../auth/guards/jwt-auth.guard';
 import { CreateMetadataDto }                         from './dto/create-metadata.dto';
 import { RegisterNftDto }                            from './dto/register-nft.dto';
 import {
@@ -52,6 +52,15 @@ export class NftController {
   ) {
     const ownerId = req.user.userId;
     return this.nftService.register(dto, ownerId);
+  }
+
+  @Get('featured')
+  @ApiOperation({ summary: 'Buscar NFTs em destaque' })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  async getFeaturedNFTs(
+    @Query('limit', new DefaultValuePipe(8), ParseIntPipe) limit?: number,
+  ) {
+    return this.nftService.findFeatured(limit);
   }
 
   @Get('page/:pageId')
