@@ -39,7 +39,7 @@ const CATEGORIES = [
  */
 const SettingsTab: React.FC<SettingsTabProps> = ({ page }) => {
   const router = useRouter();
-  const { updatePageMutation, isLoading, error, clearError } = useUpdatePage();
+  const { updatePageMutation, isLoading, error } = useUpdatePage();
 
   // Type assertion para acessar campos extras
   const pageWithExtras = page as PageResponseDto & {

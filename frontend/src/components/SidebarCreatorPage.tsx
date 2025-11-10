@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useMyPage } from '@/hooks/useMyPage';
 import { SignOutIcon } from '@primer/octicons-react';
 import Link from 'next/link';
+import { getPageAvatarUrl } from '@/utils/imageUrls';
 
 export default function SidebarCreatorPage() {
   const { address, logout } = useAuth();
@@ -19,16 +20,15 @@ export default function SidebarCreatorPage() {
     return null;
   }
 
-  // Backend garante que avatarUrl sempre existe (auto-healing)
   const displayName = address ? `${address.slice(0, 6)}…${address.slice(-4)}` : 'Conectar';
+  const avatarUrl = getPageAvatarUrl(page.id);
 
   return (
     <div className="relative flex items-center mx-4">
       <Menu as="div" className="relative w-full">
         <MenuButton className="w-full flex items-center h-12 px-2 hover:bg-surface-hover rounded-lg focus:outline-none transition-all overflow-hidden">
           <img
-            key={page.avatarUrl}
-            src={page.avatarUrl!}
+            src={avatarUrl}
             alt={page.name}
             className="w-8 h-8 rounded-md object-cover flex-shrink-0"
             referrerPolicy="no-referrer"

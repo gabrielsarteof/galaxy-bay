@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useMyPage } from '@/hooks/useMyPage';
 import { SignOutIcon } from '@primer/octicons-react';
+import { getPageAvatarUrl } from '@/utils/imageUrls';
 
 export default function SidebarProfile() {
   const { address, logout } = useAuth();
@@ -46,22 +47,24 @@ export default function SidebarProfile() {
         <MenuItems className="origin-bottom-left w-65 absolute bottom-full left-0 pt-3 pb-1 mb-2 w-56 bg-surface border border-light focus:outline-none rounded-md shadow-menu z-20 transition-theme">
           {page ? (
             <MenuItem>
-              {({ active }) => (
-                <Link
-                  href={`/page/${page.slug}`}
-                  onMouseEnter={() => router.prefetch(`/page/${page.slug}`)}
-                  className={`flex items-center px-4 py-3 text-sm font-medium text-primary hover:bg-surface-hover transition-theme ${active ? 'bg-surface-hover' : ''}`}
-                >
-                  <img
-                    key={page.avatarUrl}
-                    src={page.avatarUrl!}
-                    alt={page.name}
-                    className="w-8 h-8 rounded-md mr-2 object-cover"
-                    referrerPolicy="no-referrer"
-                  />
-                  {page.name}
-                </Link>
-              )}
+              {({ active }) => {
+                const avatarUrl = getPageAvatarUrl(page.id);
+                return (
+                  <Link
+                    href={`/page/${page.slug}`}
+                    onMouseEnter={() => router.prefetch(`/page/${page.slug}`)}
+                    className={`flex items-center px-4 py-3 text-sm font-medium text-primary hover:bg-surface-hover transition-theme ${active ? 'bg-surface-hover' : ''}`}
+                  >
+                    <img
+                      src={avatarUrl}
+                      alt={page.name}
+                      className="w-8 h-8 rounded-md mr-2 object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                    {page.name}
+                  </Link>
+                );
+              }}
             </MenuItem>
           ) : (
             <MenuItem>

@@ -37,6 +37,7 @@ export default function PageDashboard() {
   const [localTagline, setLocalTagline] = useState('');
   const [dirty, setDirty] = useState(false);
   const [isDescriptionModalOpen, setIsDescriptionModalOpen] = useState(false);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
 
   const activeTab = searchParams?.get('tab') || 'inicio';
 
@@ -48,7 +49,7 @@ export default function PageDashboard() {
     }
   }, [page]);
 
-  const isEditing = page?.status !== 'published';
+  const isEditing = page?.status !== 'published' && !isPreviewMode;
 
   useEffect(() => {
     if (!page) return;
@@ -86,6 +87,10 @@ export default function PageDashboard() {
     }
   };
 
+  const handleTogglePreview = () => {
+    setIsPreviewMode(!isPreviewMode);
+  };
+
   const handleDescriptionSave = async (description: string) => {
     if (!page) return;
 
@@ -101,39 +106,28 @@ export default function PageDashboard() {
     if (!page) return;
 
     try {
-      console.log('Upload iniciado:', {
-        pageId: page.id,
-        type,
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type
-      });
-
       const formData = new FormData();
       formData.append(type, file);
 
-      console.log('FormData criado, enviando requisição...');
-      const result = await updatePage(page.id, formData);
-      console.log('Upload concluído com sucesso:', result);
+      await updatePage(page.id, formData);
 
-      // Invalida cache do React Query para forçar refetch
-      // Padrão recomendado para sincronização após mutações
+      // Invalida cache do React Query para refletir mudanças
       await queryClient.invalidateQueries({ queryKey: ['page', slug] });
-      console.log('Cache do React Query invalidado');
     } catch (err) {
-      console.error('Erro completo ao fazer upload:', err);
-      if (err && typeof err === 'object' && 'response' in err) {
-        const axiosError = err as { response?: { data?: unknown; status?: number } };
-        console.error('Resposta do servidor:', axiosError.response);
-      }
       throw err;
     }
   };
 
   /**
    * Renderiza a tab ativa com base no parâmetro de query
+   * Em modo preview, sempre mostra a tab Home
    */
   const renderTab = () => {
+    // Em modo preview, sempre mostra a Home
+    if (isPreviewMode) {
+      return <HomeTab page={page!} />;
+    }
+
     switch (activeTab) {
       case 'inicio':
         return <HomeTab page={page!} />;
@@ -182,7 +176,7 @@ export default function PageDashboard() {
 
   return (
     <CreatorLayout active="/">
-      <div className="overflow-y-auto bg-gray-50 min-h-screen">
+      <div className={`overflow-y-auto min-h-screen ${isPreviewMode ? 'bg-white' : 'bg-gray-50'}`}>
         {error && (
           <div className="fixed top-4 right-4 z-50 max-w-md">
             <ErrorMessage message={error} onDismiss={clearError} />
@@ -192,10 +186,12 @@ export default function PageDashboard() {
         <PageHeader
           page={page}
           isEditing={isEditing}
+          isPreviewMode={isPreviewMode}
           dirty={dirty}
           onSave={handleSave}
           onDiscard={handleDiscard}
           onPublish={handlePublish}
+          onTogglePreview={handleTogglePreview}
         />
         <HeroSection
           page={page}
@@ -210,20 +206,22 @@ export default function PageDashboard() {
           setLocalTagline={setLocalTagline}
           isEditing={isEditing}
         />
-        <SecondaryNav />
+        {!isPreviewMode && <SecondaryNav />}
 
         {/* Renderização das tabs */}
         <div className="pt-10 pb-30">
           {renderTab()}
         </div>
 
-        {/* Modal de descrição (usado pela AboutTab) */}
-        <DescriptionModal
-          isOpen={isDescriptionModalOpen}
-          onClose={() => setIsDescriptionModalOpen(false)}
-          onSave={handleDescriptionSave}
-          initialValue={page.description ?? ''}
-        />
+        {/* Modal de descrição (usado pela AboutTab) - Oculto em modo preview */}
+        {!isPreviewMode && (
+          <DescriptionModal
+            isOpen={isDescriptionModalOpen}
+            onClose={() => setIsDescriptionModalOpen(false)}
+            onSave={handleDescriptionSave}
+            initialValue={page.description ?? ''}
+          />
+        )}
       </div>
     </CreatorLayout>
   );

@@ -1,19 +1,14 @@
 'use client';
 
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { createListingSchema, CreateListingFormData } from '@/schemas/listing.schema';
 import { useMarketplace } from '@/hooks/useMarketplace';
 import { useRouter } from 'next/navigation';
-
-const listingSchema = z.object({
-  price: z.string().min(1, 'Preço é obrigatório').refine(
-    (val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0,
-    'Preço deve ser maior que 0'
-  ),
-});
-
-type ListingFormData = z.infer<typeof listingSchema>;
+import Button from '@/components/Button';
+import FormInput from '@/components/FormInput';
+import ErrorMessage from '@/components/ErrorMessage';
 
 interface ListingFormProps {
   nft: {
@@ -30,16 +25,19 @@ interface ListingFormProps {
 export function ListingForm({ nft }: ListingFormProps) {
   const router = useRouter();
   const { listItem, isListing } = useMarketplace();
+  const [formError, setFormError] = useState<string>('');
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
-  } = useForm<ListingFormData>({
-    resolver: zodResolver(listingSchema),
+    formState: { errors, isSubmitting },
+  } = useForm<CreateListingFormData>({
+    resolver: zodResolver(createListingSchema),
   });
 
-  const onSubmit = async (data: ListingFormData) => {
+  const onSubmit = async (data: CreateListingFormData) => {
+    setFormError('');
+
     try {
       await listItem({
         nftId: nft.id,
@@ -47,60 +45,65 @@ export function ListingForm({ nft }: ListingFormProps) {
         price: data.price,
       });
 
-      alert('NFT listado com sucesso!');
       router.push(nft.page ? `/page/${nft.page.slug}` : '/');
     } catch (error: any) {
-      console.error('Erro ao listar NFT:', error);
-      alert(error?.message || 'Falha ao listar NFT');
+      setFormError(error?.message || 'Falha ao listar NFT. Tente novamente.');
     }
   };
 
-  return (
-    <div className="max-w-2xl mx-auto p-6">
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h1 className="text-3xl font-bold mb-6">Colocar NFT à Venda</h1>
+  const isFormLoading = isListing || isSubmitting;
 
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-          <h3 className="font-semibold text-lg mb-2">{nft.name}</h3>
+  return (
+    <div className="min-h-screen flex items-center justify-center px-4 bg-white">
+      <div className="w-full max-w-2xl py-8 space-y-8">
+        <div className="space-y-3">
+          <h1 className="text-center text-2xl font-bold text-gray-900">
+            Colocar NFT à Venda
+          </h1>
+          <p className="text-center text-gray-600 leading-relaxed">
+            Defina um preço e liste seu NFT no marketplace.
+          </p>
+        </div>
+
+        <div className="p-6 bg-gray-50 rounded-lg border border-gray-200">
+          <h3 className="font-semibold text-lg mb-2 text-gray-900">{nft.name}</h3>
           <p className="text-sm text-gray-600">Token ID: {nft.tokenId}</p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="mb-6">
-            <label className="block mb-2 font-semibold text-gray-700">
-              Preço (ETH)
-            </label>
-            <input
-              {...register('price')}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div className="space-y-2">
+            <FormInput
+              id="price"
+              label="Preço (ETH)"
               type="text"
-              step="0.001"
-              className="w-full border border-gray-300 rounded-md px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="0.1"
+              register={register('price')}
+              error={errors.price?.message}
             />
-            {errors.price && (
-              <p className="text-red-500 text-sm mt-1">{errors.price.message}</p>
-            )}
-            <p className="text-sm text-gray-500 mt-2">
+            <p className="text-sm text-gray-500">
               O comprador pagará este valor em ETH
             </p>
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
-            <h4 className="font-semibold text-blue-800 mb-2">Processo de Listagem:</h4>
-            <ol className="list-decimal list-inside space-y-1 text-sm text-blue-700">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h4 className="font-semibold text-blue-900 mb-3">Processo de Listagem:</h4>
+            <ol className="list-decimal list-inside space-y-2 text-sm text-blue-800">
               <li>Aprovar o marketplace para transferir seu NFT</li>
               <li>Listar o NFT no marketplace</li>
               <li>Aguardar confirmação na blockchain</li>
             </ol>
           </div>
 
-          <button
+          {formError && <ErrorMessage message={formError} onDismiss={() => setFormError('')} />}
+
+          <Button
             type="submit"
-            disabled={isListing}
-            className="w-full bg-blue-600 text-white py-3 rounded-md font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            loading={isFormLoading}
+            disabled={isFormLoading}
+            fullWidth
           >
             {isListing ? 'Listando...' : 'Listar NFT'}
-          </button>
+          </Button>
         </form>
       </div>
     </div>

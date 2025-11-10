@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { usePageBySlug } from '@/hooks/usePageBySlug';
 import { Globe, Twitter, Instagram, MessageCircle } from 'lucide-react';
 import Image from 'next/image';
+import { getPageAvatarUrl, getPageBannerUrl } from '@/utils/imageUrls';
 
 /**
  * Página pública de visualização de perfil do criador.
@@ -72,19 +73,20 @@ export default function PublicPageView() {
     { url: page.discordUrl, icon: MessageCircle, label: 'Discord' },
   ].filter(link => link.url);
 
+  const avatarUrl = getPageAvatarUrl(page.id);
+  const bannerUrl = getPageBannerUrl(page.id);
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Banner */}
       <div className="relative w-full h-64 bg-gradient-to-r from-blue-500 to-purple-600">
-        {page.bannerUrl && (
-          <Image
-            src={page.bannerUrl}
-            alt="Banner"
-            fill
-            className="object-cover"
-            priority
-          />
-        )}
+        <Image
+          src={bannerUrl}
+          alt="Banner"
+          fill
+          className="object-cover"
+          priority
+        />
       </div>
 
       {/* Profile Section */}
@@ -94,19 +96,13 @@ export default function PublicPageView() {
           <div className="flex items-end gap-6">
             <div className="relative">
               <div className="w-40 h-40 rounded-full border-4 border-white bg-white overflow-hidden shadow-lg">
-                {page.avatarUrl ? (
-                  <Image
-                    src={page.avatarUrl}
-                    alt={page.name}
-                    width={160}
-                    height={160}
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-4xl font-bold">
-                    {page.name.charAt(0).toUpperCase()}
-                  </div>
-                )}
+                <Image
+                  src={avatarUrl}
+                  alt={page.name}
+                  width={160}
+                  height={160}
+                  className="object-cover"
+                />
               </div>
             </div>
 

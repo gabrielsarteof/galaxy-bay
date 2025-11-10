@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import randomColor from 'randomcolor';
 import { FileMediaIcon } from '@primer/octicons-react';
 import ImageCropModal from '@/components/ImageCropModal';
@@ -8,6 +8,7 @@ import { fileToDataUrl, validateImageFile, autoResizeIfNeeded } from '@/utils/im
 import { useImageUploadPreview } from '@/hooks/useImageUploadPreview';
 import ErrorMessage from '@/components/ErrorMessage';
 import type { components } from '@/types/api-schema';
+import { getPageAvatarUrl, getPageBannerUrl } from '@/utils/imageUrls';
 
 type PageResponseDto = components['schemas']['PageResponseDto'];
 
@@ -56,31 +57,16 @@ const HeroSection: React.FC<HeroSectionProps> = ({ page, isEditing, onImageUploa
     clearPreview,
     setUploading,
     isUploadingAvatar,
-    isUploadingBanner,
-    hasPreview
+    isUploadingBanner
   } = useImageUploadPreview();
 
   /**
-   * Limpa preview quando URL do servidor é atualizada.
-   * Detecta mudança em avatarUrl/bannerUrl após router.refresh().
+   * Constrói URLs dinamicamente usando o ID da página.
+   * Cache busting é feito através do timestamp passado como versão.
    */
-  useEffect(() => {
-    console.log('[HeroSection] Avatar URL mudou:', page.avatarUrl);
-    console.log('[HeroSection] Tem preview de avatar?', hasPreview('avatar'));
-    if (hasPreview('avatar') && page.avatarUrl) {
-      console.log('[HeroSection] Limpando preview de avatar');
-      clearPreview('avatar');
-    }
-  }, [page.avatarUrl, hasPreview, clearPreview]);
-
-  useEffect(() => {
-    console.log('[HeroSection] Banner URL mudou:', page.bannerUrl);
-    console.log('[HeroSection] Tem preview de banner?', hasPreview('banner'));
-    if (hasPreview('banner') && page.bannerUrl) {
-      console.log('[HeroSection] Limpando preview de banner');
-      clearPreview('banner');
-    }
-  }, [page.bannerUrl, hasPreview, clearPreview]);
+  const [imageVersion, setImageVersion] = useState<number>(Date.now());
+  const avatarUrl = getPageAvatarUrl(page.id, imageVersion);
+  const bannerUrl = getPageBannerUrl(page.id, imageVersion);
 
   const clearError = () => setError('');
 
@@ -137,21 +123,16 @@ const HeroSection: React.FC<HeroSectionProps> = ({ page, isEditing, onImageUploa
     setError('');
 
     try {
-      console.log('[HeroSection] Iniciando crop complete para:', cropType);
       const previewDataUrl = await fileToDataUrl(croppedFile);
-      console.log('[HeroSection] Preview DataURL gerado:', previewDataUrl.substring(0, 50) + '...');
-
       setPreview(cropType, previewDataUrl);
-      console.log('[HeroSection] Preview setado para:', cropType);
-
       setUploading(cropType, true);
+
       await onImageUpload(croppedFile, cropType);
-      console.log('[HeroSection] Upload concluído para:', cropType);
 
-      // Preview será limpo automaticamente pelo useEffect quando URL do servidor chegar
+      // Limpa preview e atualiza versão para forçar cache busting
+      clearPreview(cropType);
+      setImageVersion(Date.now());
     } catch (err) {
-      console.error('Erro ao fazer upload:', err);
-
       let errorMessage = 'Erro ao fazer upload da imagem. Tente novamente.';
 
       if (err && typeof err === 'object' && 'response' in err) {
@@ -199,13 +180,14 @@ const HeroSection: React.FC<HeroSectionProps> = ({ page, isEditing, onImageUploa
         onMouseEnter={() => isEditing && setIsBannerHover(true)}
         onMouseLeave={() => { setIsBannerHover(false); setIsBtnHover(false); }}
       >
-        {getDisplayUrl('banner', page.bannerUrl) ? (
+        {getDisplayUrl('banner', bannerUrl) ? (
           <img
-            key={getDisplayUrl('banner', page.bannerUrl)!}
-            src={getDisplayUrl('banner', page.bannerUrl)!}
+            key={getDisplayUrl('banner', bannerUrl)!}
+            src={getDisplayUrl('banner', bannerUrl)!}
             alt={`Banner de ${page.name}`}
             className="w-full h-80 object-cover"
             referrerPolicy="no-referrer"
+            crossOrigin="anonymous"
           />
         ) : (
           <div className="w-full h-80" style={getBannerStyle(page.name)} />
@@ -256,13 +238,14 @@ const HeroSection: React.FC<HeroSectionProps> = ({ page, isEditing, onImageUploa
           onMouseEnter={() => isEditing && setIsAvatarHover(true)}
           onMouseLeave={() => { setIsAvatarHover(false); setIsAvatarIconHover(false); }}
         >
-          {getDisplayUrl('avatar', page.avatarUrl) ? (
+          {getDisplayUrl('avatar', avatarUrl) ? (
             <img
-              key={getDisplayUrl('avatar', page.avatarUrl)!}
-              src={getDisplayUrl('avatar', page.avatarUrl)!}
+              key={getDisplayUrl('avatar', avatarUrl)!}
+              src={getDisplayUrl('avatar', avatarUrl)!}
               alt={page.name}
               className="w-32 h-32 rounded-3xl border-4 border-white object-cover"
               referrerPolicy="no-referrer"
+              crossOrigin="anonymous"
             />
           ) : (
             <img
