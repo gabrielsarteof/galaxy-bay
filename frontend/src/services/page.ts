@@ -66,3 +66,38 @@ export async function getPageCommunity(slug: string) {
   const { data } = await api.get(`/page/slug/${slug}/community`);
   return data;
 }
+
+export interface DiscoverPageParams {
+  category?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+  sortBy?: 'recent' | 'popular' | 'volume' | 'name';
+}
+
+export interface DiscoverPageResponse {
+  data: PageResponseDto[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+export async function discoverPages(params: DiscoverPageParams = {}): Promise<DiscoverPageResponse> {
+  const { data } = await api.get<DiscoverPageResponse>('/page/discover', { params });
+  return data;
+}
+
+export async function getTrendingPages(limit: number = 5): Promise<PageResponseDto[]> {
+  const { data } = await api.get<PageResponseDto[]>('/page/trending', {
+    params: { limit },
+  });
+  return data;
+}
+
+export async function getPageCategories(): Promise<string[]> {
+  const { data } = await api.get<string[]>('/page/categories');
+  return data;
+}

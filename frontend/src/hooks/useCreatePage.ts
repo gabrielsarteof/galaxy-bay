@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { createPage } from '@/services/page';
 import { CreatePageFormData } from '@/schemas/page.schema';
 
@@ -12,6 +13,7 @@ interface UseCreatePageReturn {
 
 export function useCreatePage(): UseCreatePageReturn {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -25,6 +27,10 @@ export function useCreatePage(): UseCreatePageReturn {
       console.log('Creating page with data:', data);
       const page = await createPage({ name: data.pageName, slug: data.slug });
       console.log('Page created successfully:', page);
+
+      // Invalida cache e redireciona imediatamente
+      queryClient.invalidateQueries({ queryKey: ['page'] });
+
       console.log('Redirecting to:', `/page/${page.slug}`);
       router.push(`/page/${page.slug}`);
     } catch (err: unknown) {

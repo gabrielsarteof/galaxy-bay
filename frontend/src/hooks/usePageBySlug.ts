@@ -8,7 +8,7 @@ export function usePageBySlug(slug: string) {
   return useQuery<PageResponseDto, Error>({
     queryKey: ['page', slug],
     queryFn: () => getPageBySlug(slug),
-    staleTime: 0, // Sempre refetch após invalidateQueries para garantir dados atualizados
+    staleTime: 1000 * 60 * 5, // 5 minutos
     refetchOnMount: true,
   });
 }

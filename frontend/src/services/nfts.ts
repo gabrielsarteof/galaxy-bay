@@ -57,3 +57,11 @@ export async function updateNFT(id: string, payload: {
   const { data } = await api.put(`/nfts/${id}`, payload);
   return data;
 }
+
+/**
+ * Busca NFTs em destaque
+ */
+export async function getFeaturedNFTs(limit: number = 8) {
+  const { data } = await api.get(`/nfts/featured`, { params: { limit } });
+  return data;
+}

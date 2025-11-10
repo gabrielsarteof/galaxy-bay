@@ -43,3 +43,11 @@ export async function createActivity(payload: {
   const { data } = await api.post('/activities', payload);
   return data;
 }
+
+/**
+ * Busca atividades recentes da plataforma
+ */
+export async function getRecentActivities(limit: number = 10) {
+  const { data } = await api.get('/activities/recent', { params: { limit } });
+  return data;
+}

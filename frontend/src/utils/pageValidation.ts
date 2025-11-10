@@ -29,24 +29,12 @@ export function validatePageRequirements(
     return {
       requirements: [],
       completedCount: 0,
-      totalCount: 5,
+      totalCount: 3,
       canPublish: false
     };
   }
 
   const requirements: PageRequirement[] = [
-    {
-      id: 'avatar',
-      label: 'Adicionar uma foto de perfil',
-      description: 'Use uma imagem clara que represente você ou sua marca',
-      completed: !!page.avatarUrl
-    },
-    {
-      id: 'banner',
-      label: 'Adicionar uma imagem de capa',
-      description: 'Uma imagem de banner ajuda a dar personalidade à sua página',
-      completed: !!page.bannerUrl
-    },
     {
       id: 'name',
       label: 'Definir nome da página',

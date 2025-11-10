@@ -47,3 +47,11 @@ export async function deleteCollection(id: string) {
   const { data } = await api.delete(`/collections/${id}`);
   return data;
 }
+
+/**
+ * Busca coleções em tendência (maior volume de vendas na última hora)
+ */
+export async function getTrendingCollections() {
+  const { data } = await api.get('/collections/trending');
+  return data;
+}

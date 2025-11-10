@@ -49,8 +49,6 @@ export const updatePageSchema = z.object({
     .max(10, 'Você pode adicionar no máximo 10 tags')
     .optional(),
   status: z.enum(['draft', 'published']).optional(),
-  avatarUrl: z.string().url().optional(),
-  bannerUrl: z.string().url().optional(),
   twitterUrl: z
     .string()
     .url('URL do Twitter inválida')

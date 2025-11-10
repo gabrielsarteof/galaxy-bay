@@ -23,17 +23,7 @@ export function usePageProgress(page: PageResponseDto | null | undefined) {
   const checklist = useMemo<ChecklistItem[]>(() => {
     if (!page) return [];
 
-    // Verifica se tem imagens customizadas (não são as padrões geradas)
-    // Avatar/banner padrão tem "?v=" no final, customizado tem timestamp diferente
-    const hasCustomProfile = !!page.avatarUrl || !!page.bannerUrl;
-
     return [
-      {
-        id: 'profile',
-        label: 'Personalizar perfil',
-        description: 'Adicione sua foto de perfil e banner de capa para destacar sua coleção.',
-        completed: hasCustomProfile,
-      },
       {
         id: 'description',
         label: 'Descrever sua coleção',
