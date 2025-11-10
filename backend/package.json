@@ -18,7 +18,11 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "migrate:images": "ts-node -r tsconfig-paths/register scripts/migrate-images-to-png.ts"
+    "migrate:images": "ts-node -r tsconfig-paths/register scripts/migrate-images-to-png.ts",
+    "seed": "ts-node -r tsconfig-paths/register prisma/seed.ts"
+  },
+  "prisma": {
+    "seed": "ts-node -r tsconfig-paths/register prisma/seed.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -27,9 +31,11 @@
     "@nestjs/jwt": "^11.0.0",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.1.1",
+    "@nestjs/schedule": "^6.0.1",
     "@nestjs/serve-static": "^5.0.3",
     "@nestjs/swagger": "^11.2.0",
     "@prisma/client": "^6.7.0",
+    "axios": "^1.13.2",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
     "cors": "^2.8.5",
@@ -51,6 +57,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
     "@eslint/js": "^9.18.0",
+    "@faker-js/faker": "^10.1.0",
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.1",
@@ -59,7 +66,7 @@
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",
     "@types/multer": "^1.4.13",
-    "@types/node": "^22.10.7",
+    "@types/node": "^22.19.0",
     "@types/supertest": "^6.0.2",
     "@types/uuid": "^10.0.0",
     "eslint": "^9.18.0",
