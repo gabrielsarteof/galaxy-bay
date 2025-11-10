@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, ForbiddenException, BadRequestException,
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateMetadataDto } from './dto/create-metadata.dto';
 import { IpfsService } from 'src/utils/ipfs.service';
+import { PinataService } from 'src/utils/pinata.service';
 import { BlockchainService } from 'src/utils/blockchain.service';
 import { RegisterNftDto } from './dto/register-nft.dto';
 import { NftStatus } from '@prisma/client';
@@ -13,6 +14,7 @@ export class NftService {
   constructor(
     private prisma: PrismaService,
     private ipfs: IpfsService,
+    private pinata: PinataService,
     private blockchain: BlockchainService,
   ) {}
 
@@ -27,6 +29,57 @@ export class NftService {
     // Envia para IPFS e obtém a URL
     const metadataUrl = await this.ipfs.uploadMetadata(metadata);
     return metadataUrl;
+  }
+
+  /**
+   * Workflow completo de upload de NFT para IPFS via Pinata
+   *
+   * Fluxo:
+   * 1. Validar entrada (buffer, nome, descrição)
+   * 2. Upload imagem otimizada → imageCID
+   * 3. Upload metadata com imageCID → metadataCID
+   * 4. Retornar tokenURI para uso no mint on-chain
+   *
+   * Rationale: Separar upload IPFS do mint on-chain permite melhor
+   * controle de erros e retry de uploads sem gastar gas.
+   */
+  async prepareNFTForMinting(
+    imageBuffer: Buffer,
+    nftName: string,
+    description: string,
+    attributes: Array<{
+      trait_type: string;
+      value: string | number;
+      display_type?: string;
+      max_value?: number;
+    }>,
+  ) {
+    this.logger.log(`Preparando NFT para mint: ${nftName}`);
+
+    if (!imageBuffer || imageBuffer.length === 0) {
+      throw new BadRequestException('Buffer de imagem vazio ou inválido');
+    }
+
+    if (!nftName || nftName.trim().length === 0) {
+      throw new BadRequestException('Nome do NFT é obrigatório');
+    }
+
+    if (!description || description.trim().length === 0) {
+      throw new BadRequestException('Descrição do NFT é obrigatória');
+    }
+
+    const result = await this.pinata.uploadCompleteNFT(
+      imageBuffer,
+      nftName,
+      description,
+      attributes,
+    );
+
+    this.logger.log(
+      `NFT preparado com sucesso: ${nftName} → tokenURI=${result.tokenURI}`
+    );
+
+    return result;
   }
 
   async register(dto: RegisterNftDto, ownerId: string) {
