@@ -35,16 +35,20 @@ describe('PinataService', () => {
     // Mock do PinataSDK
     mockPinataClient = {
       upload: {
-        file: jest.fn().mockResolvedValue({
-          cid: MOCK_IMAGE_CID,
-          size: 524288, // 512KB
-        }),
-        json: jest.fn().mockResolvedValue({
-          cid: MOCK_METADATA_CID,
-        }),
+        public: {
+          file: jest.fn().mockResolvedValue({
+            cid: MOCK_IMAGE_CID,
+            size: 524288, // 512KB
+          }),
+          json: jest.fn().mockResolvedValue({
+            cid: MOCK_METADATA_CID,
+          }),
+        },
       },
       gateways: {
-        get: jest.fn().mockResolvedValue({ data: 'mock-content' }),
+        public: {
+          get: jest.fn().mockResolvedValue({ data: 'mock-content' }),
+        },
       },
     };
 
@@ -61,6 +65,9 @@ describe('PinataService', () => {
 
     // Substituir client interno pelo mock
     (service as any).client = mockPinataClient;
+
+    // Mock do método optimizeImage para evitar processamento real de imagens
+    jest.spyOn(service as any, 'optimizeImage').mockResolvedValue(Buffer.from('optimized-image-data'));
   });
 
   afterEach(() => {
@@ -142,7 +149,7 @@ describe('PinataService', () => {
       const cid = await service.uploadImageToIPFS(mockBuffer, filename);
 
       expect(cid).toBe(MOCK_IMAGE_CID);
-      expect(mockPinataClient.upload.file).toHaveBeenCalledTimes(1);
+      expect(mockPinataClient.upload.public.file).toHaveBeenCalledTimes(1);
     });
 
     it('deve otimizar imagem antes do upload', async () => {
@@ -153,7 +160,7 @@ describe('PinataService', () => {
 
       expect(cid).toBe(MOCK_IMAGE_CID);
       // Verificar que upload foi chamado (imagem foi otimizada)
-      expect(mockPinataClient.upload.file).toHaveBeenCalledTimes(1);
+      expect(mockPinataClient.upload.public.file).toHaveBeenCalledTimes(1);
     });
 
     it('deve fazer retry em caso de falha temporária', async () => {
@@ -161,7 +168,7 @@ describe('PinataService', () => {
       const filename = 'test-image.jpg';
 
       // Simular falha nas primeiras 2 tentativas, sucesso na 3ª
-      mockPinataClient.upload.file
+      mockPinataClient.upload.public.file
         .mockRejectedValueOnce(new Error('Network error'))
         .mockRejectedValueOnce(new Error('Timeout'))
         .mockResolvedValueOnce({
@@ -172,7 +179,7 @@ describe('PinataService', () => {
       const cid = await service.uploadImageToIPFS(mockBuffer, filename);
 
       expect(cid).toBe(MOCK_IMAGE_CID);
-      expect(mockPinataClient.upload.file).toHaveBeenCalledTimes(3);
+      expect(mockPinataClient.upload.public.file).toHaveBeenCalledTimes(3);
     });
 
     it('deve lançar erro após todas as tentativas falharem', async () => {
@@ -180,7 +187,7 @@ describe('PinataService', () => {
       const filename = 'test-image.jpg';
 
       // Simular falha em todas as tentativas
-      mockPinataClient.upload.file.mockRejectedValue(
+      mockPinataClient.upload.public.file.mockRejectedValue(
         new Error('Persistent network error')
       );
 
@@ -189,7 +196,7 @@ describe('PinataService', () => {
       ).rejects.toThrow(InternalServerErrorException);
 
       // MAX_RETRIES = 3
-      expect(mockPinataClient.upload.file).toHaveBeenCalledTimes(3);
+      expect(mockPinataClient.upload.public.file).toHaveBeenCalledTimes(3);
     });
   });
 
@@ -205,7 +212,7 @@ describe('PinataService', () => {
       const cid = await service.uploadMetadataToIPFS(validMetadata);
 
       expect(cid).toBe(MOCK_METADATA_CID);
-      expect(mockPinataClient.upload.json).toHaveBeenCalledWith(validMetadata);
+      expect(mockPinataClient.upload.public.json).toHaveBeenCalledWith(validMetadata);
     });
 
     it('deve rejeitar metadata sem campo name', async () => {
@@ -267,14 +274,14 @@ describe('PinataService', () => {
     });
 
     it('deve fazer retry em caso de falha temporária', async () => {
-      mockPinataClient.upload.json
+      mockPinataClient.upload.public.json
         .mockRejectedValueOnce(new Error('Network error'))
         .mockResolvedValueOnce({ cid: MOCK_METADATA_CID });
 
       const cid = await service.uploadMetadataToIPFS(validMetadata);
 
       expect(cid).toBe(MOCK_METADATA_CID);
-      expect(mockPinataClient.upload.json).toHaveBeenCalledTimes(2);
+      expect(mockPinataClient.upload.public.json).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -313,8 +320,8 @@ describe('PinataService', () => {
       );
 
       // Verificar ordem de chamadas
-      const fileCallOrder = mockPinataClient.upload.file.mock.invocationCallOrder[0];
-      const jsonCallOrder = mockPinataClient.upload.json.mock.invocationCallOrder[0];
+      const fileCallOrder = mockPinataClient.upload.public.file.mock.invocationCallOrder[0];
+      const jsonCallOrder = mockPinataClient.upload.public.json.mock.invocationCallOrder[0];
 
       expect(fileCallOrder).toBeLessThan(jsonCallOrder);
     });
@@ -327,7 +334,7 @@ describe('PinataService', () => {
         attributes
       );
 
-      const metadataCall = mockPinataClient.upload.json.mock.calls[0][0];
+      const metadataCall = mockPinataClient.upload.public.json.mock.calls[0][0];
       expect(metadataCall.image).toBe(`ipfs://${MOCK_IMAGE_CID}`);
     });
 
@@ -339,7 +346,7 @@ describe('PinataService', () => {
         attributes
       );
 
-      const metadataCall = mockPinataClient.upload.json.mock.calls[0][0];
+      const metadataCall = mockPinataClient.upload.public.json.mock.calls[0][0];
       expect(metadataCall.attributes).toEqual(attributes);
     });
   });
@@ -350,12 +357,12 @@ describe('PinataService', () => {
       const content = await service.fetchContentFromIPFS(cid);
 
       expect(content).toEqual({ data: 'mock-content' });
-      expect(mockPinataClient.gateways.get).toHaveBeenCalledWith(cid);
+      expect(mockPinataClient.gateways.public.get).toHaveBeenCalledWith(cid);
     });
 
     it('deve lançar erro se CID for inválido', async () => {
       const cid = 'invalid-cid';
-      mockPinataClient.gateways.get.mockRejectedValue(
+      mockPinataClient.gateways.public.get.mockRejectedValue(
         new Error('CID not found')
       );
 
@@ -373,7 +380,7 @@ describe('PinataService', () => {
       // Mock de sleep para capturar delays
       const sleepSpy = jest.spyOn(service as any, 'sleep');
 
-      mockPinataClient.upload.file
+      mockPinataClient.upload.public.file
         .mockRejectedValueOnce(new Error('Error 1'))
         .mockRejectedValueOnce(new Error('Error 2'))
         .mockResolvedValueOnce({ cid: MOCK_IMAGE_CID, size: 1024 });

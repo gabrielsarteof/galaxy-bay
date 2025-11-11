@@ -349,10 +349,10 @@ describe('NFTMetadataBuilder', () => {
   });
 
   describe('Edge Cases', () => {
-    it('deve lidar com strings vazias', () => {
+    it('deve rejeitar string vazia como name', () => {
       expect(() => {
         builder.setBasicInfo('', 'Desc', 'QmTest123').build();
-      }).not.toThrow();
+      }).toThrow('campo "name" é obrigatório');
     });
 
     it('deve lidar com valores numéricos zero', () => {

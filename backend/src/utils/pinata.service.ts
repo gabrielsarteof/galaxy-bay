@@ -1,6 +1,6 @@
 import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common';
 import { PinataSDK } from 'pinata';
-import * as sharp from 'sharp';
+import sharp from 'sharp';
 
 interface ImageOptimizationOptions {
   maxWidth?: number;
@@ -177,7 +177,7 @@ export class PinataService {
       const blob = new Blob([optimizedBuffer], { type: 'image/jpeg' });
       const file = new File([blob], filename);
 
-      const upload = await this.client.upload.file(file);
+      const upload = await this.client.upload.public.file(file);
 
       this.logger.log(
         `Imagem enviada para IPFS: ${filename} → CID=${upload.cid} (${upload.size} bytes)`
@@ -204,7 +204,7 @@ export class PinataService {
     this.validateMetadataStructure(metadata);
 
     return this.executeWithRetry(async () => {
-      const upload = await this.client.upload.json(metadata);
+      const upload = await this.client.upload.public.json(metadata);
 
       this.logger.log(
         `Metadata enviada para IPFS: ${metadata.name} → CID=${upload.cid}`
@@ -338,7 +338,7 @@ export class PinataService {
    */
   async fetchContentFromIPFS(cid: string): Promise<any> {
     try {
-      return await this.client.gateways.get(cid);
+      return await this.client.gateways.public.get(cid);
     } catch (error) {
       this.logger.error(`Erro ao recuperar conteúdo do IPFS (CID=${cid}):`, error);
       throw new InternalServerErrorException(
