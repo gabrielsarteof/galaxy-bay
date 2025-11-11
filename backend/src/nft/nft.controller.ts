@@ -32,7 +32,7 @@ import {
   ApiQuery,
   ApiConsumes,
 } from '@nestjs/swagger';
-import { NftStatus } from '@prisma/client';
+import { NftStatus } from './types/nft-status.type';
 
 @ApiTags('nfts')                          
 @ApiBearerAuth('access-token')            

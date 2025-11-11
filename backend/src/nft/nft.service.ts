@@ -5,7 +5,7 @@ import { IpfsService } from 'src/utils/ipfs.service';
 import { PinataService } from 'src/utils/pinata.service';
 import { BlockchainService } from 'src/utils/blockchain.service';
 import { RegisterNftDto } from './dto/register-nft.dto';
-import { NftStatus } from '@prisma/client';
+import { NftStatus } from './types/nft-status.type';
 
 @Injectable()
 export class NftService {
