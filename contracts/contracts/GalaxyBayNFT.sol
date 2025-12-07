@@ -16,7 +16,8 @@ contract GalaxyBayNFT is ERC721URIStorage, Ownable {
     /// @param to Endereço beneficiário do token
     /// @param tokenURI URI da metadata
     /// @return tokenId ID do token cunhado
-    function mintTo(address to, string calldata tokenURI) external onlyOwner returns (uint256) {
+    /// @dev Removido onlyOwner para permitir que qualquer usuário possa mintar
+    function mintTo(address to, string calldata tokenURI) external returns (uint256) {
         uint256 tokenId = nextTokenId++;
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, tokenURI);
