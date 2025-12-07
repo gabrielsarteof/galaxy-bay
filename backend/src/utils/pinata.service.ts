@@ -1,6 +1,8 @@
 import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common';
 import { PinataSDK } from 'pinata';
 import sharp from 'sharp';
+import axios from 'axios';
+import FormData from 'form-data';
 
 interface ImageOptimizationOptions {
   maxWidth?: number;
@@ -8,7 +10,7 @@ interface ImageOptimizationOptions {
   quality?: number;
 }
 
-interface NFTUploadResult {
+export interface NFTUploadResult {
   imageCID: string;
   metadataCID: string;
   tokenURI: string;
@@ -166,24 +168,59 @@ export class PinataService {
    * @param options Opções de otimização
    * @returns CID (Content Identifier) da imagem no IPFS
    */
+  /**
+   * Upload de imagem usando API HTTP direta do Pinata
+   * Solução alternativa ao SDK que estava travando no NestJS
+   */
+  private async uploadImageViaHTTP(buffer: Buffer, filename: string): Promise<string> {
+    this.logger.log(`[uploadImageViaHTTP] Iniciando upload via HTTP para ${filename}`);
+
+    const formData = new FormData();
+    formData.append('file', buffer, {
+      filename,
+      contentType: 'image/jpeg',
+    });
+
+    try {
+      const response = await axios.post(
+        'https://api.pinata.cloud/pinning/pinFileToIPFS',
+        formData,
+        {
+          headers: {
+            ...formData.getHeaders(),
+            'Authorization': `Bearer ${process.env.PINATA_JWT}`,
+          },
+          maxContentLength: Infinity,
+          maxBodyLength: Infinity,
+          timeout: 300000, // 5 minutos
+        }
+      );
+
+      this.logger.log(`[uploadImageViaHTTP] Upload concluído:`, response.data);
+      return response.data.IpfsHash;
+    } catch (error) {
+      this.logger.error(`[uploadImageViaHTTP] Erro:`, error);
+      throw error;
+    }
+  }
+
   async uploadImageToIPFS(
     buffer: Buffer,
     filename: string,
     options?: ImageOptimizationOptions,
   ): Promise<string> {
     return this.executeWithRetry(async () => {
+      this.logger.log(`[uploadImageToIPFS] Iniciando upload de ${filename}`);
       const optimizedBuffer = await this.optimizeImage(buffer, filename, options);
 
-      const blob = new Blob([optimizedBuffer], { type: 'image/jpeg' });
-      const file = new File([blob], filename);
-
-      const upload = await this.client.upload.public.file(file);
+      // Usar API HTTP direta em vez do SDK
+      const cid = await this.uploadImageViaHTTP(optimizedBuffer, filename);
 
       this.logger.log(
-        `Imagem enviada para IPFS: ${filename} → CID=${upload.cid} (${upload.size} bytes)`
+        `Imagem enviada para IPFS: ${filename} → CID=${cid}`
       );
 
-      return upload.cid;
+      return cid;
     }, `Upload de imagem ${filename}`);
   }
 
@@ -200,17 +237,48 @@ export class PinataService {
    * @param metadata Objeto com metadata do NFT
    * @returns CID do metadata no IPFS
    */
+  /**
+   * Upload de JSON usando API HTTP direta do Pinata
+   */
+  private async uploadJSONViaHTTP(metadata: Record<string, any>): Promise<string> {
+    this.logger.log(`[uploadJSONViaHTTP] Iniciando upload de metadata`);
+
+    try {
+      const response = await axios.post(
+        'https://api.pinata.cloud/pinning/pinJSONToIPFS',
+        metadata,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.PINATA_JWT}`,
+          },
+          timeout: 300000, // 5 minutos
+        }
+      );
+
+      this.logger.log(`[uploadJSONViaHTTP] Upload concluído:`, response.data);
+      return response.data.IpfsHash;
+    } catch (error) {
+      this.logger.error(`[uploadJSONViaHTTP] Erro:`, error);
+      throw error;
+    }
+  }
+
   async uploadMetadataToIPFS(metadata: Record<string, any>): Promise<string> {
+    this.logger.log(`[uploadMetadataToIPFS] Validando estrutura de metadata`);
     this.validateMetadataStructure(metadata);
 
     return this.executeWithRetry(async () => {
-      const upload = await this.client.upload.public.json(metadata);
+      this.logger.log(`[uploadMetadataToIPFS] Metadata:`, JSON.stringify(metadata, null, 2));
+
+      // Usar API HTTP direta em vez do SDK
+      const cid = await this.uploadJSONViaHTTP(metadata);
 
       this.logger.log(
-        `Metadata enviada para IPFS: ${metadata.name} → CID=${upload.cid}`
+        `Metadata enviada para IPFS: ${metadata.name} → CID=${cid}`
       );
 
-      return upload.cid;
+      return cid;
     }, `Upload de metadata "${metadata.name}"`);
   }
 

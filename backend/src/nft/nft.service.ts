@@ -64,14 +64,15 @@ export class NftService {
       throw new BadRequestException('Nome do NFT é obrigatório');
     }
 
-    if (!description || description.trim().length === 0) {
-      throw new BadRequestException('Descrição do NFT é obrigatória');
-    }
+    // Descrição é opcional, usar string vazia se não fornecida
+    const finalDescription = description && description.trim().length > 0
+      ? description.trim()
+      : 'NFT criado na Galaxy Bay';
 
     const result = await this.pinata.uploadCompleteNFT(
       imageBuffer,
       nftName,
-      description,
+      finalDescription,
       attributes,
     );
 
