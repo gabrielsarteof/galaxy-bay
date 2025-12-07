@@ -4,10 +4,65 @@ import type { components } from '@/types/api-schema';
 type CreateMetadataDto = components['schemas']['CreateMetadataDto'];
 type RegisterNftDto = components['schemas']['RegisterNftDto'];
 
+interface PrepareNFTParams {
+  image: File;
+  name: string;
+  description: string;
+  attributes?: Array<{ trait_type: string; value: string | number }>;
+}
+
+interface PrepareNFTResult {
+  imageCID: string;
+  metadataCID: string;
+  tokenURI: string;
+  imageUrl: string;
+  metadataUrl: string;
+}
+
+/**
+ * Upload completo de NFT para IPFS via Pinata
+ * Novo endpoint que faz upload de imagem + metadata
+ */
+export async function prepareMintNFT(
+  params: PrepareNFTParams
+): Promise<PrepareNFTResult> {
+  const formData = new FormData();
+  formData.append('image', params.image);
+  formData.append('name', params.name);
+  formData.append('description', params.description || '');
+
+  if (params.attributes && params.attributes.length > 0) {
+    formData.append('attributes', JSON.stringify(params.attributes));
+  }
+
+  const { data } = await api.post<{ success: boolean; data: PrepareNFTResult; message: string }>(
+    '/nfts/prepare-mint',
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      timeout: 600000, // 10 minutos
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total) {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          console.log(`[prepareMintNFT] Upload progress: ${percentCompleted}%`);
+        }
+      },
+    }
+  );
+
+  return data.data;
+}
+
+/**
+ * @deprecated Use prepareMintNFT instead
+ * Mantido apenas para compatibilidade
+ */
 export async function generateMetadata(
   dto: CreateMetadataDto
 ): Promise<{ metadataUrl: string }> {
-  const { data } = await api.post<{ metadataUrl: string }>('/nfts/generate-metadata', dto);  // Endpoint correto
+  const { data } = await api.post<{ metadataUrl: string }>('/nfts/generate-metadata', dto);
   return data;
 }
 
