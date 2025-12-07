@@ -24,7 +24,28 @@ export async function createCollection(pageId: string, payload: {
   description?: string;
   bannerUrl?: string;
 }) {
-  const { data } = await api.post(`/collections/page/${pageId}`, payload);
+  // Auto-gerar slug a partir do nome
+  let slug = payload.name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+    .replace(/[^a-z0-9\s-]/g, '') // Remove caracteres especiais
+    .replace(/\s+/g, '-') // Substitui espaços por hífens
+    .replace(/-+/g, '-') // Remove hífens duplicados
+    .replace(/^-|-$/g, ''); // Remove hífens do início e fim
+
+  // Se o slug ficar vazio, usar um padrão
+  if (!slug) {
+    slug = 'collection';
+  }
+
+  // Adicionar timestamp para garantir unicidade
+  slug = `${slug}-${Date.now()}`;
+
+  const { data } = await api.post(`/collections/page/${pageId}`, {
+    ...payload,
+    slug,
+  });
   return data;
 }
 
