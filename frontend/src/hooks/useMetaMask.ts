@@ -42,12 +42,16 @@ export function useMetaMask(): UseMetaMaskReturn {
     error: null,
   });
 
-  // Verifica se MetaMask está instalado
+  // Verifica se MetaMask está instalado e restaura conexão anterior
   useEffect(() => {
     const ethereum = (window as { ethereum?: MetaMaskProvider }).ethereum;
+    const storedAddress = localStorage.getItem('walletAddress');
+
     setState((prev) => ({
       ...prev,
       isInstalled: !!ethereum,
+      isConnected: !!storedAddress,
+      address: storedAddress,
       isLoading: false,
     }));
   }, []);
@@ -61,6 +65,7 @@ export function useMetaMask(): UseMetaMaskReturn {
       const accountsArray = accounts as string[];
       if (accountsArray.length === 0) {
         // MetaMask desconectado
+        localStorage.removeItem('walletAddress');
         setState((prev) => ({
           ...prev,
           isConnected: false,
@@ -69,10 +74,12 @@ export function useMetaMask(): UseMetaMaskReturn {
         }));
       } else {
         // Conta mudou
+        const newAddress = accountsArray[0];
+        localStorage.setItem('walletAddress', newAddress);
         setState((prev) => ({
           ...prev,
           isConnected: true,
-          address: accountsArray[0],
+          address: newAddress,
           error: null,
         }));
       }
@@ -84,6 +91,7 @@ export function useMetaMask(): UseMetaMaskReturn {
     };
 
     const handleDisconnect = () => {
+      localStorage.removeItem('walletAddress');
       setState((prev) => ({
         ...prev,
         isConnected: false,
@@ -146,6 +154,10 @@ export function useMetaMask(): UseMetaMaskReturn {
       }
 
       const address = accounts[0];
+
+      // Salvar no localStorage para persistir entre recarregamentos
+      localStorage.setItem('walletAddress', address);
+
       setState({
         isConnected: true,
         address,
@@ -173,6 +185,7 @@ export function useMetaMask(): UseMetaMaskReturn {
    * Nota: MetaMask não tem um método oficial de "disconnect" da aplicação.
    */
   const disconnect = useCallback(() => {
+    localStorage.removeItem('walletAddress');
     setState((prev) => ({
       ...prev,
       isConnected: false,
