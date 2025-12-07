@@ -115,9 +115,10 @@ export class PageController {
   })
   async getMyPage(
     @Req() req: ExpressRequest & { user: { userId: string } },
-  ): Promise<PageResponseDto> {
+  ) {
     const page = await this.pageService.findOneByOwner(req.user.userId);
-    return this.toDto(page);
+    // Retornar dados completos incluindo collections para o owner
+    return page;
   }
 
   @UseGuards(JwtAuthGuard)

@@ -102,6 +102,16 @@ export class PageService {
   async findOneByOwner(ownerId: string) {
     const page = await this.prisma.page.findUnique({
       where: { ownerId },
+      include: {
+        collections: {
+          orderBy: { createdAt: 'desc' },
+          include: {
+            _count: {
+              select: { nfts: true },
+            },
+          },
+        },
+      },
     });
     if (!page) {
       throw new NotFoundException('Página não encontrada');

@@ -148,8 +148,16 @@ export class NftController {
     @Body('description') description: string,
     @Body('attributes') attributesJson?: string,
   ) {
-    if (!name || !description) {
-      throw new BadRequestException('Campos "name" e "description" são obrigatórios');
+    console.log('[NftController] prepareMint iniciado');
+    console.log('[NftController] File recebido:', {
+      filename: file?.originalname,
+      mimetype: file?.mimetype,
+      size: file?.size,
+    });
+    console.log('[NftController] Dados:', { name, description, attributesJson });
+
+    if (!name) {
+      throw new BadRequestException('Campo "name" é obrigatório');
     }
 
     let attributes = [];
@@ -166,12 +174,14 @@ export class NftController {
       }
     }
 
+    console.log('[NftController] Chamando nftService.prepareNFTForMinting...');
     const result = await this.nftService.prepareNFTForMinting(
       file.buffer,
       name,
       description,
       attributes,
     );
+    console.log('[NftController] prepareMint concluído:', result);
 
     return {
       success: true,
@@ -191,7 +201,9 @@ export class NftController {
     @Body() dto: RegisterNftDto,
     @Request() req: any,
   ) {
+    console.log('[NftController] registerNft chamado com dados:', JSON.stringify(dto, null, 2));
     const ownerId = req.user.userId;
+    console.log('[NftController] ownerId:', ownerId);
     return this.nftService.register(dto, ownerId);
   }
 

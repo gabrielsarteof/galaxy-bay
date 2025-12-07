@@ -16,8 +16,8 @@ export class RegisterNftDto {
   @IsUrl()
   metadataUrl: string;
 
-  @IsNumber()
-  price: number;
+  @IsNumber() @IsOptional()
+  price?: number;
 
   @IsString()
   pageId: string;
@@ -28,6 +28,6 @@ export class RegisterNftDto {
   @IsString()
   transactionHash: string;
 
-  @IsString()
-  blockHash: string;
+  @IsString() @IsOptional()
+  blockHash?: string;
 }
