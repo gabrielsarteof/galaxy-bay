@@ -53,6 +53,10 @@ lerna-debug.log*
 # Docker volumes
 postgres_data/
 
+# Database backups
+backups/
+*.sql
+
 # temp directory
 .temp
 .tmp
